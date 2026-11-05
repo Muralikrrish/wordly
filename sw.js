@@ -2,10 +2,10 @@
    search index) is stored on the first visit; each definition file is stored
    the first time a word in it is opened, so words already read open offline.
    Bump APP when the page's own files change, so phones pick up the new ones. */
-const APP = "wordly-app-1";
+const APP = "wordly-app-2";
 const DATA = "wordly-data";
 const SHELL = [
-  "./", "index.html", "style.css", "app.js", "manifest.webmanifest", "icon-512.png",
+  "./", "index.html", "style.css", "home.css", "icons.js", "motion.js", "app.js", "manifest.webmanifest", "icon-512.png",
   "data/index.json", "data/collections.json", "data/extras.json",
   "fonts/outfit_regular.ttf", "fonts/outfit_semibold.ttf", "fonts/outfit_bold.ttf",
   "fonts/inter_regular.ttf", "fonts/inter_medium.ttf", "fonts/inter_semibold.ttf", "fonts/inter_italic.ttf",
@@ -36,8 +36,9 @@ self.addEventListener("fetch", (e) => {
     }));
     return;
   }
-  // Everything else: the network when online (so updates show), else the copy kept.
-  e.respondWith(fetch(e.request).then((res) => {
+  // Everything else: the network when online — always checking with the
+  // server, never a stale browser copy, so updates show at once — else the copy kept.
+  e.respondWith(fetch(e.request, { cache: "no-cache" }).then((res) => {
     if (res.ok) caches.open(APP).then((c) => c.put(e.request, res.clone()));
     return res;
   }).catch(() => caches.match(e.request, { ignoreSearch: true })));

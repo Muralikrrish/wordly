@@ -12,12 +12,14 @@
 @font-face { font-family: Literata; src: url(fonts/literata_bold.ttf); font-weight: 700; font-display: swap; }
 
 :root {
+  /* The app's default theme (AppTheme CLASSIC, dark): background, surfaceVariant,
+     surfaceContainerHigh, onBackground (InkDark), onSurfaceVariant, primary. */
   --bg: #13171B;
-  --surface: #1B2227;
-  --container: #222A30;
-  --ink: #E8E6E1;
-  --muted: #A9B0B6;
-  --faint: rgba(232, 230, 225, 0.10);
+  --surface: #1B2227;          /* surfaceContainerHigh */
+  --container: #222A30;        /* surfaceVariant */
+  --ink: #ECE8DF;
+  --muted: #B3ADA2;
+  --faint: rgba(236, 232, 223, 0.10);
   --accent: #93C2D8;
   --on-accent: #13171B;
   --gutter: 20px;

@@ -1,0 +1,131 @@
+/* ======================================================================
+   Stage 1 — the app's home and its motion (sizes from SearchScreen.kt,
+   Collections.kt, Common.kt; motion from Anim.kt / Sheen.kt / Wordmark).
+   ====================================================================== */
+.ico { display: inline-grid; place-items: center; }
+.ico svg { width: 100%; height: 100%; display: block; }
+
+/* Sheen: a soft diagonal glow sweeping across a coloured surface, then resting
+   off the far corner — 8.5 s loop, the sweep taking the first 45%. */
+.sheen { position: relative; overflow: hidden; isolation: isolate; }
+.sheen::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  --s: 0.10;
+  background-image: linear-gradient(to bottom right,
+    transparent 36%, rgba(255,255,255, calc(var(--s) * 0.4)) 43%, rgba(255,255,255, var(--s)) 50%,
+    rgba(255,255,255, calc(var(--s) * 0.4)) 57%, transparent 64%);
+  background-size: 300% 300%; background-repeat: no-repeat;
+  animation: sheen 8.5s linear infinite;
+}
+.sheen.soft::before { --s: 0.07; }
+.sheen > * { position: relative; z-index: 1; }
+@keyframes sheen { 0% { background-position: 100% 100%; } 45%, 100% { background-position: 0% 0%; } }
+
+/* The flowing wordmark: a closed 17-colour wheel repeating end to end, moving
+   one way forever — one turn every 17 s (shared clock: see Motion.syncFlow). */
+.wm {
+  display: inline-block; font-family: Outfit, sans-serif; font-weight: 700; letter-spacing: -0.025em;
+  background-image: linear-gradient(90deg, #6CC0B7, #5CC3D0, #72B5E0, #7FA3EA, #8E95E6, #A99BEA, #A08CDC,
+    #C28ACF, #D986BF, #E596AE, #E19A8A, #EBB08F, #DDAA73, #D7BE6E, #B9C877, #86C9A0, #5FC0A0, #6CC0B7);
+  background-size: 450% 100%; background-repeat: repeat-x;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: flow 17s linear infinite; will-change: background-position;
+}
+.wm.semi { font-weight: 600; }
+@keyframes flow { from { background-position: 0% 0; } to { background-position: -128.5714% 0; } }
+
+/* ---- splash ---- */
+#splash { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: grid; place-items: center; }
+#splash .splash-icon { width: 200px; height: 200px; will-change: transform, opacity; }
+#splash .splash-icon svg { width: 100%; height: 100%; }
+
+/* ---- home ---- */
+.home-menu { padding: calc(4px + var(--top)) 0 0 6px; }
+.home-menu .icon-btn { width: 48px; height: 48px; color: var(--ink); }
+.hero { position: relative; margin-top: -26px; padding: 0; text-align: center; overflow: hidden; }
+.hero .logo-disc { width: 96px; height: 96px; border-radius: 50%; background: var(--container); display: inline-grid; place-items: center; }
+.hero .logo-disc svg { width: 68px; height: 68px; }
+.hero .wm { font-size: 36px; line-height: 1.2; margin: 12px 0 12px; }
+.bg-icons { position: absolute; inset: 0; pointer-events: none; }
+.bg-icon { position: absolute; width: 44px; height: 44px; opacity: 0.15; will-change: transform; animation: drift 11s infinite; }
+.bg-icon svg { width: 100%; height: 100%; }
+@keyframes drift {   /* ±5 px on a sine, 11 s */
+  0% { transform: translate3d(0, 0, 0); animation-timing-function: cubic-bezier(.37,0,.63,1); }
+  25% { transform: translate3d(0, 5px, 0); animation-timing-function: cubic-bezier(.37,0,.63,1); }
+  50% { transform: translate3d(0, 0, 0); animation-timing-function: cubic-bezier(.37,0,.63,1); }
+  75% { transform: translate3d(0, -5px, 0); animation-timing-function: cubic-bezier(.37,0,.63,1); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+.search { padding: 6px 20px; top: 0; }
+.search label { height: 56px; padding: 0 12px 0 8px; border-radius: 28px; background: var(--container);
+  box-shadow: 0 2px 4px rgba(0,0,0,.28), 0 1px 2px rgba(0,0,0,.2); gap: 6px; }
+.search input { font: 400 17px Outfit, sans-serif; }
+.search .lead { width: 40px; height: 40px; display: grid; place-items: center; color: var(--muted); flex: none; position: relative; }
+.search .lead svg { width: 24px; height: 24px; position: absolute; }
+
+.wotd2 { display: block; margin: 18px 20px 0; border-radius: 22px; overflow: hidden; background: var(--surface);
+  box-shadow: 0 3px 8px rgba(0,0,0,.35); }
+.wotd2 .top { padding: 24px 22px; text-align: center; color: #fff; }
+.wotd2 .top h2 { font: 600 27px/35px Outfit, sans-serif; margin: 0; }
+.wotd2 .top h2.m { font-size: 24px; line-height: 31px; }
+.wotd2 .top h2.s { font-size: 21px; line-height: 28px; }
+.wotd2 .top p { font: 400 14px/20px Inter, sans-serif; color: rgba(255,255,255,.92); margin: 8px 0 0; }
+.wotd2 .bottom { padding: 13px 0; text-align: center; }
+.wotd2 .label { font: 600 11px Outfit, sans-serif; letter-spacing: 1.4px; color: var(--accent); }
+.wotd2 .date { font: 400 13px Outfit, sans-serif; color: var(--muted); margin-top: 2px; }
+
+.home-head { text-align: center; padding: 30px 20px 0; }
+.home-head .wm { font-size: 22px; line-height: 1.25; }
+
+.cgrid { padding: 0 20px; }
+.crow { display: flex; gap: 12px; margin-bottom: 12px; align-items: stretch; }
+.crow > * { flex: 1 1 0; min-width: 0; }
+.ccard { border-radius: 20px; color: #fff; display: flex; flex-direction: column; padding: 14px 14px 12px; height: 100%;
+  box-shadow: 0 2px 5px rgba(0,0,0,.3); }
+.ccard h3 { font: 600 18px/22px Outfit, sans-serif; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ccard p { font: 400 12.5px/16px Inter, sans-serif; color: rgba(255,255,255,.84); margin: 3px 4px 0 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ccard .spacer { flex: 1; min-height: 12px; }
+.ccard .badge2 { align-self: flex-end; width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.17); display: grid; place-items: center; }
+.ccard .badge2 .ico { width: 21px; height: 21px; color: #fff; }
+.ccard.quiet { background: var(--surface); border: 1px solid rgba(147,194,216,.22); color: var(--ink); box-shadow: none; }
+.ccard.quiet p { color: var(--muted); -webkit-line-clamp: 1; }
+.ccard.quiet .badge2 { background: rgba(147,194,216,.14); }
+.ccard.quiet .badge2 .ico { color: var(--accent); width: 20px; height: 20px; }
+.scard { position: relative; display: block; height: 112px; margin: 0 20px 12px; border-radius: 20px; color: #fff;
+  padding: 14px 64px 14px 14px; box-shadow: 0 2px 5px rgba(0,0,0,.3); }
+.scard h3 { font: 600 18px/22px Outfit, sans-serif; margin: 0; }
+.scard p { font: 400 12.5px/16px Inter, sans-serif; color: rgba(255,255,255,.84); margin: 3px 0 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.scard .badge2 { position: absolute; right: 12px; bottom: 12px; width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.17); display: grid; place-items: center; }
+.scard .badge2 .ico { width: 21px; height: 21px; }
+.glabel { display: flex; align-items: center; gap: 10px; padding: 14px 22px 12px; font: 500 11px Outfit, sans-serif; letter-spacing: 1.4px; color: var(--muted); text-transform: uppercase; }
+.glabel::before, .glabel::after { content: ""; flex: 1; height: 1px; background: rgba(236,232,223,.10); }
+
+/* the Daily Challenge banner (QuizScreens.kt ChallengeBanner) */
+.banner { display: block; margin: 12px 20px 0; border-radius: 24px; color: #fff; padding: 16px 16px 16px 18px; box-shadow: 0 4px 12px rgba(0,0,0,.4); }
+.banner .top { display: flex; align-items: center; }
+.banner .bolt { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.18); display: grid; place-items: center; margin-right: 10px; }
+.banner .bolt svg { width: 18px; height: 18px; }
+.banner .kick { flex: 1; font: 600 12px Outfit, sans-serif; letter-spacing: 1.4px; color: rgba(255,255,255,.9); }
+.banner .day { font: 500 13px Outfit, sans-serif; color: rgba(255,255,255,.75); }
+.banner h3 { font: 600 23px/28px Outfit, sans-serif; margin: 14px 0 4px; }
+.banner .sub { font: 400 14px/19px Outfit, sans-serif; color: rgba(255,255,255,.86); }
+.pips { display: flex; gap: 6px; margin: 14px 0 16px; }
+.pips i { flex: 1; height: 7px; border-radius: 4px; background: rgba(255,255,255,.22); }
+.pips i.on { background: #fff; }
+.banner .row { display: flex; align-items: center; }
+.cardpill { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 20px 0 16px; border-radius: 22px; background: #fff; font: 600 16px Outfit, sans-serif; }
+.cardpill svg { width: 18px; height: 18px; }
+.banner .open { margin-left: auto; display: inline-flex; align-items: center; padding: 10px 0 10px 8px; font: 600 14.5px Outfit, sans-serif; }
+.banner .open svg { width: 20px; height: 20px; }
+
+/* home list rows (WordRow) */
+.hrows { padding: 0 20px; }
+.hrow { display: block; padding: 0 6px; border-radius: 12px; }
+.hrow-wrap { border-bottom: 1px solid rgba(236,232,223,.14); }
+.wrow { padding: 11px 0; }
+.wrow .w { font: 400 18px Outfit, sans-serif; color: var(--ink); }
+.wrow .t { font: italic 400 13px Outfit, sans-serif; color: var(--accent); margin-left: 10px; }
+.wrow .g { font: 400 14.5px/20px Outfit, sans-serif; color: var(--muted); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.home-bottom { height: 32px; }
+.view { min-height: 100vh; background: var(--bg); }

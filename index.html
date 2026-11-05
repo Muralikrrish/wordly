@@ -14,9 +14,24 @@
 <link rel="icon" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-512.png">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="home.css">
 </head>
 <body>
-<main id="app" aria-live="polite"></main>
+<!-- The splash: the app's ribbon "W" on the window colour; it glides up into
+     the home logo once the words are ready (see Motion.liftSplash). -->
+<div id="splash" aria-hidden="true"><div class="splash-icon">
+<svg viewBox="0 0 108 108"><defs>
+<linearGradient id="sg1" gradientUnits="userSpaceOnUse" x1="24.1" y1="32.55" x2="39.05" y2="75.45"><stop offset="0" stop-color="#56E3CF"/><stop offset="1" stop-color="#2FA7C9"/></linearGradient>
+<linearGradient id="sg2" gradientUnits="userSpaceOnUse" x1="54" y1="42.95" x2="68.95" y2="75.45"><stop offset="0" stop-color="#B57CF5"/><stop offset="1" stop-color="#8A56E6"/></linearGradient>
+<linearGradient id="sg3" gradientUnits="userSpaceOnUse" x1="39.05" y1="75.45" x2="54" y2="42.95"><stop offset="0" stop-color="#2B5FD9"/><stop offset="1" stop-color="#3D86EE"/></linearGradient>
+<linearGradient id="sg4" gradientUnits="userSpaceOnUse" x1="68.95" y1="75.45" x2="83.9" y2="32.55"><stop offset="0" stop-color="#E0588F"/><stop offset="1" stop-color="#F57BA8"/></linearGradient>
+</defs><g fill="none" stroke-width="14.3" stroke-linecap="round" transform="translate(54 54) scale(0.62) translate(-54 -54)">
+<path d="M24.1 32.55L39.05 75.45" stroke="url(#sg1)"/><path d="M54 42.95L68.95 75.45" stroke="url(#sg2)"/>
+<path d="M39.05 75.45L54 42.95" stroke="url(#sg3)"/><path d="M68.95 75.45L83.9 32.55" stroke="url(#sg4)"/></g></svg>
+</div></div>
+<main id="app"></main>
+<script src="icons.js"></script>
+<script src="motion.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

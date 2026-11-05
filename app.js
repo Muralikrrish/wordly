@@ -77,7 +77,7 @@ async function json(path) {
 async function loadIndex() {
   if (data.index) return;
   const rows = await json("data/index.json");
-  data.index = rows.map(([id, word, type, preview]) => ({ id, word, type, preview, norm: word.toLowerCase() }));
+  data.index = rows.map(([id, word, type, preview, f]) => ({ id, word, type, preview, f, norm: word.toLowerCase() }));
   for (const e of data.index) {
     data.byId.set(e.id, e);
     if (!data.byNorm.has(e.norm)) data.byNorm.set(e.norm, []);
@@ -180,7 +180,7 @@ const tidy = (raw) => raw.replace(/[’‘]/g, "'").replace(/^[^\p{L}\p{N}]+|[^\
 
 // ---- word of the day (same pick as the app) -------------------------------
 function wordOfTheDay() {
-  const pool = data.index.filter((e) => !e.word.includes(" ") && e.word.length <= 16);
+  const pool = data.index.filter((e) => e.f);   // DictionaryDb.featurableIds()
   const now = new Date();
   const day = Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
   const i = (((day * 1103515245 + 12345) % pool.length) + pool.length) % pool.length;
@@ -205,42 +205,200 @@ function topBar(title, back = true) {
   return `<div class="bar">${back ? `<button class="icon-btn" onclick="history.back()" aria-label="Back">${ICON.back}</button>` : ""}<h1>${esc(title)}</h1></div>`;
 }
 
-async function home() {
+// ---- the app's look: collection colours and icons (Collections.kt) -------
+const COL_SEED = {
+  gre: 1, ielts: 6, core: 9,
+  virtues: 4, flaws: 7, rudeness: 0, villainy: 2, characters: 9, emotions: 5, law: 8, power: 3,
+  money: 1, health: 6, mind: 4, science: 9, argument: 7, language: 0, logic: 2,
+  per_art: 3, per_logic: 6, per_figures: 8, per_speeches: 1, per_winning: 5,
+  eponyms: 5, foreign: 8, idioms: 1, phrasal: 0, confused: 4, second: 2, stories: 7,
+  idm_body: 0, idm_animals: 5, idm_food: 3, idm_money: 8, idm_sea: 6, idm_war: 1, idm_nature: 9,
+  idm_games: 4, idm_secrets: 2, idm_talk: 7, idm_friends: 5, idm_work: 0, idm_time: 8, idm_trouble: 3, idm_success: 1,
+};
+const COL_ICON = {
+  gre: "ic_col_gre", ielts: "ic_col_exam", core: "ic_col_book", virtues: "ic_col_star", flaws: "ic_col_warning",
+  rudeness: "ic_col_crown", villainy: "ic_col_mask", characters: "ic_col_people", emotions: "ic_col_heart",
+  law: "ic_col_scales", power: "ic_col_capitol", money: "ic_col_money", health: "ic_col_pulse", mind: "ic_col_head",
+  science: "ic_col_flask", argument: "ic_col_chat", language: "ic_col_book", logic: "ic_col_bulb",
+  eponyms: "ic_col_badge", foreign: "ic_col_globe", idioms: "ic_col_quote", confused: "ic_col_notequal",
+  second: "ic_col_venn", stories: "ic_col_scroll", phrasal: "ic_col_book",
+  per_art: "ic_col_chat", per_logic: "ic_col_warning", per_figures: "ic_col_quote", per_speeches: "ic_col_capitol",
+  per_winning: "ic_col_people", idm_body: "ic_col_head", idm_money: "ic_col_money", idm_sea: "ic_col_globe",
+  idm_war: "ic_col_warning", idm_games: "ic_col_badge", idm_secrets: "ic_col_mask", idm_talk: "ic_col_chat",
+  idm_friends: "ic_col_people", idm_time: "ic_col_pulse", idm_success: "ic_col_star", idm_trouble: "ic_col_scales",
+};
+const colSeed = (id, fallback) => COL_SEED[id] ?? fallback;
+const colIcon = (id) => COL_ICON[id] || (id.startsWith("fam_") ? "ic_col_root" : id.startsWith("idm_") ? "ic_col_quote" : "ic_collections");
+// Section cards on the home page (SectionStyle in Collections.kt).
+const SECTION = {
+  "Exam prep": ["GRE, IELTS and TOEFL word lists", 1, "ic_col_exam"],
+  "Topics": ["Words by subject, from law to emotions", 7, "ic_col_globe"],
+  "Persuasion toolkit": ["The words of rhetoric and argument", 6, "ic_col_chat"],
+  "Curiosities": ["Idioms, word stories, look-alikes and more", 4, "ic_col_star"],
+  "Idioms by theme": ["Idioms sorted by what they're about", 9, "ic_col_quote"],
+};
+const OPEN_SECTION = "Exam prep";
+const icon = (name, cls = "") => `<span class="ico ${cls}">${ICONS[name] || ""}</span>`;
+
+// The app's ribbon "W" (res/drawable/ic_logo.xml).
+const LOGO = `<svg viewBox="0 0 108 108" aria-hidden="true"><defs>
+<linearGradient id="lg1" gradientUnits="userSpaceOnUse" x1="24.1" y1="32.55" x2="39.05" y2="75.45"><stop offset="0" stop-color="#56E3CF"/><stop offset="1" stop-color="#2FA7C9"/></linearGradient>
+<linearGradient id="lg2" gradientUnits="userSpaceOnUse" x1="54" y1="42.95" x2="68.95" y2="75.45"><stop offset="0" stop-color="#B57CF5"/><stop offset="1" stop-color="#8A56E6"/></linearGradient>
+<linearGradient id="lg3" gradientUnits="userSpaceOnUse" x1="39.05" y1="75.45" x2="54" y2="42.95"><stop offset="0" stop-color="#2B5FD9"/><stop offset="1" stop-color="#3D86EE"/></linearGradient>
+<linearGradient id="lg4" gradientUnits="userSpaceOnUse" x1="68.95" y1="75.45" x2="83.9" y2="32.55"><stop offset="0" stop-color="#E0588F"/><stop offset="1" stop-color="#F57BA8"/></linearGradient>
+</defs><g fill="none" stroke-width="14.3" stroke-linecap="round" transform="translate(54 54) scale(1.3) translate(-54 -54)">
+<path d="M24.1 32.55L39.05 75.45" stroke="url(#lg1)"/><path d="M54 42.95L68.95 75.45" stroke="url(#lg2)"/>
+<path d="M39.05 75.45L54 42.95" stroke="url(#lg3)"/><path d="M68.95 75.45L83.9 32.55" stroke="url(#lg4)"/></g></svg>`;
+
+// ---- Kotlin's seeded Random (XorWow), so day-based colours match the app ----
+function kotlinRandom(seedBig) {
+  const s = BigInt.asIntN(64, BigInt(seedBig));
+  let x = Number(BigInt.asIntN(32, s)), y = Number(BigInt.asIntN(32, s >> 32n)), z = 0, w = 0;
+  let v = ~x, addend = ((x << 10) ^ (y >>> 4)) | 0;
+  const nextInt = () => {
+    let t = x;
+    t = t ^ (t >>> 2);
+    x = y; y = z; z = w;
+    const v0 = v;
+    w = v0;
+    t = (t ^ (t << 1)) ^ v0 ^ (v0 << 4);
+    v = t | 0;
+    addend = (addend + 362437) | 0;
+    return (t + addend) | 0;
+  };
+  for (let i = 0; i < 64; i++) nextInt();
+  return {
+    nextInt(until) {
+      if ((until & -until) === until) {
+        const bits = 31 - Math.clz32(until);
+        return bits === 0 ? 0 : (nextInt() >>> (32 - bits));
+      }
+      let bits, val;
+      // (Kotlin's Int arithmetic wraps at 32 bits; | 0 does the same here.)
+      do { bits = nextInt() >>> 1; val = bits % until; } while (((bits - val + (until - 1)) | 0) < 0);
+      return val;
+    },
+  };
+}
+const FAMILY = [0, 0, 3, 3, 1, 1, 4, 5, 2, 2];
+const family = (i) => FAMILY[((i % 10) + 10) % 10];
+// Palette.challenge(day): a fresh hue daily, never the Word of the Day's hue
+// family that day, nor the same family as the day before.
+function challengeSeed(day, depth = 1) {
+  const avoid = new Set([family(day)]);
+  if (depth > 0) avoid.add(family(challengeSeed(day - 1, depth - 1)));
+  let choices = [...Array(10).keys()].filter((i) => !avoid.has(family(i)));
+  if (!choices.length) choices = [...Array(10).keys()];
+  return choices[kotlinRandom(BigInt(day) * 7919n + 17n).nextInt(choices.length)];
+}
+const epochDay = () => { const n = new Date(); return Math.floor(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) / 86400000); };
+
+// ---- views and the router (screens change the way the app's do) ----------
+let $view = null;
+let tracker = null;           // the current page's RevealTracker
+let navIndex = 0;             // position in history, to tell back from forward
+const scrolls = new Map();    // each screen's scroll, kept for coming back
+
+function newView() {
+  const v = document.createElement("div");
+  v.className = "view";
+  return v;
+}
+
+// ---- home (SearchScreen.kt) ----------------------------------------------
+const BG_ICONS = ["ic_bg_book", "ic_bg_bulb", "ic_bg_atom", "ic_bg_quote", "ic_bg_globe", "ic_bg_quill",
+  "ic_bg_cap", "ic_bg_search", "ic_bg_star", "ic_bg_bubble", "ic_bg_flask", "ic_bg_compass"];
+const BG_COLORS = ["#B08D57", "#3E8E9E", "#7E6BB0", "#9E5A63", "#4E9E7A", "#C06A93", "#5A7FB0", "#C0913E"];
+const BG_SLOTS = [[true, 0.10, 0.0], [true, 0.55, 1.3], [false, 0.06, 2.6], [false, 0.51, 3.9]];
+function bgIcons() {
+  // Two faint icons each side of the logo, drifting ±5 px; which icons and
+  // colours is reshuffled every time home is shown (positions stay put).
+  const pool = [...BG_ICONS].sort(() => Math.random() - 0.5);
+  return `<div class="bg-icons">${BG_SLOTS.map(([left, y, phase], i) => {
+    const color = BG_COLORS[Math.floor(Math.random() * BG_COLORS.length)];
+    const delay = -(((phase / (2 * Math.PI)) % 1) * 11000);
+    return `<span class="bg-icon" style="${left ? "left:20px" : "right:20px"};top:${(y * 100).toFixed(0)}%;color:${color};animation-delay:${delay.toFixed(0)}ms">${ICONS[pool[i]]}</span>`;
+  }).join("")}</div>`;
+}
+
+function wordRow(e) {
+  return `<div class="wrow"><div><span class="w">${esc(e.word)}</span><span class="t">${pos(e.type)}</span></div>
+    <div class="g">${esc(e.preview || "")}</div></div>`;
+}
+
+function collectionCard(c, fallbackSeed) {
+  return `<a class="ccard sheen soft" data-press href="#/collection/${c.id}" style="background:${gradient(colSeed(c.id, fallbackSeed))}">
+    <h3>${esc(c.title)}</h3><p>${esc(c.blurb)}</p><span class="spacer"></span>
+    <span class="badge2">${icon(colIcon(c.id))}</span></a>`;
+}
+const surpriseTile = () => `<a class="ccard quiet" data-press href="#/random"><h3>Surprise me</h3><p>A random word</p>
+  <span class="spacer"></span><span class="badge2">${die()}</span></a>`;
+const die = () => `<svg class="ico" viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7">
+  <rect x="1.4" y="1.4" width="17.2" height="17.2" rx="4.6"/><g fill="currentColor" stroke="none">
+  <circle cx="6" cy="6" r="1.7"/><circle cx="14" cy="6" r="1.7"/><circle cx="10" cy="10" r="1.7"/><circle cx="6" cy="14" r="1.7"/><circle cx="14" cy="14" r="1.7"/></g></svg>`;
+function sectionCard(title, blurb, seed, iconName, href) {
+  return `<a class="scard sheen soft" data-press href="${href}" style="background:${gradient(seed)}">
+    <h3>${esc(title)}</h3><p>${esc(blurb)}</p><span class="badge2">${icon(iconName)}</span></a>`;
+}
+
+function challengeBanner() {
+  const day = epochDay();
+  const seed = challengeSeed(day);
+  const mid = PALETTE[seed][1];
+  const date = new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  return `<a class="banner sheen" data-press="0.98" href="#/quiz" style="background:${gradient(seed)}">
+    <div class="top"><span class="bolt"><svg viewBox="0 0 24 24" fill="#fff"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z"/></svg></span>
+      <span class="kick">DAILY CHALLENGE</span><span class="day">${esc(date)}</span></div>
+    <h3>Name the word</h3>
+    <div class="sub">Read the meaning, type the word. Fewer hints, more points.</div>
+    <div class="pips">${"<i></i>".repeat(10)}</div>
+    <div class="row"><span class="cardpill" style="color:${mid}"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Play now</span>
+      <span class="open">Open<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
+  </a>`;
+}
+
+async function home(view) {
   const { entry, seed } = wordOfTheDay();
   const cols = await collections();
-  const exam = cols.filter((c) => c.group === "Exam prep");
-  const groups = [...new Set(cols.map((c) => c.group))].filter((g) => g !== "Exam prep");
-  const date = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+  const open = cols.filter((c) => c.group === OPEN_SECTION);
+  const groups = [...new Set(cols.map((c) => c.group))].filter((g) => g !== OPEN_SECTION);
+  const date = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   const recents = recent().map((r) => data.byId.get(r.id)).filter(Boolean).slice(0, 5);
-  $app.innerHTML = `
-    <div class="hero fade"><img src="icon-512.png" alt=""><div class="wordmark">Wordly</div></div>
+  const titleCls = entry.word.length <= 22 ? "" : entry.word.length <= 34 ? "m" : "s";
+  const rows = [];
+  for (let i = 0; i < open.length; i += 2) {
+    const pair = open.slice(i, i + 2);
+    rows.push(`<div class="crow" data-r>${pair.map((c, j) => collectionCard(c, i + j)).join("")}${pair.length === 1 ? surpriseTile() : ""}</div>`);
+  }
+  view.innerHTML = `
+    <div class="home-menu"><button class="icon-btn" aria-label="Menu" id="menu">${ICON.menu}</button></div>
+    <div class="hero" id="hero">${bgIcons()}
+      <span class="logo-disc">${LOGO}</span><br><span class="wm">Wordly</span></div>
     ${searchBox("")}
-    <a class="wotd fade" href="#/word/${entry.id}?c=${seed}">
-      <div class="top" style="background:${gradient(seed)}"><h2>${esc(entry.word)}</h2><p>${esc(entry.preview || "")}</p></div>
-      <div class="bottom"><div class="label">WORD OF THE DAY</div><div class="date">${date}</div></div>
-    </a>
-    <div class="section-title">Word collections</div>
-    <div class="grid fade">
-      ${exam.map((c) => `<a class="card" style="background:${gradient(COLOR[c.id] ?? 3)}" href="#/collection/${c.id}">
-        <h3>${esc(c.title)}</h3><p>${esc(c.blurb)}</p><span class="badge">${GLYPH[c.id] || "•"}</span></a>`).join("")}
-      ${exam.length % 2 ? `<a class="card quiet" href="#/random"><h3>Surprise me</h3><p>A random word</p><span class="badge">⚄</span></a>` : ""}
-    </div>
-    <div class="group-label">More collections</div>
-    <div class="grid fade">
-      <a class="card wide" style="background:${gradient(3)}" href="#/families"><h3>Word families</h3>
-        <p>Learn one Greek or Latin root, unlock a whole family of words</p><span class="badge">❦</span></a>
-      ${groups.map((g, i) => { const [blurb, s, glyph] = SECTIONS[g] || ["Word collections", i, "•"];
-        return `<a class="card wide" style="background:${gradient(s)}" href="#/section/${encodeURIComponent(g)}">
-          <h3>${esc(g)}</h3><p>${esc(blurb)}</p><span class="badge">${glyph}</span></a>`; }).join("")}
-      ${exam.length % 2 ? "" : `<a class="card quiet wide" href="#/random"><h3>Surprise me</h3><p>A random word to explore</p><span class="badge">⚄</span></a>`}
-    </div>
-    <div class="section-title">My lists</div>
-    <div class="grid">
-      <a class="card quiet" href="#/lists/saved"><h3>Saved words</h3><p>${saved().length ? "Words you've kept" : "Tap the bookmark on any word"}</p></a>
-      <a class="card quiet" href="#/lists/wishlist"><h3>Wishlist</h3><p>Words you'd like Wordly to have</p></a>
-    </div>
-    ${recents.length ? `<div class="section-title">Recent searches</div><div class="rows">${recents.map(row).join("")}</div>` : ""}`;
-  wireSearch();
+    <div id="home-body">
+      <a class="wotd2" data-press data-r href="#/word/${entry.id}?c=${seed}">
+        <div class="top sheen" style="background:${gradient(seed)}"><h2 class="${titleCls}">${esc(entry.word)}</h2>
+          ${entry.preview ? `<p>${esc(entry.preview)}</p>` : ""}</div>
+        <div class="bottom"><div class="label">WORD OF THE DAY</div><div class="date">${date}</div></div>
+      </a>
+      <div class="home-head" data-r><span class="wm semi">Word collections</span></div>
+      <div style="height:12px"></div>
+      <div class="cgrid">${rows.join("")}</div>
+      ${open.length % 2 === 0 ? `<div class="cgrid" data-r>${surpriseTile()}</div>` : ""}
+      <div class="glabel" data-r>More collections</div>
+      <div data-r>${sectionCard("Word families", "Learn one Greek or Latin root, unlock a whole family of words", 3, "ic_col_root", "#/families")}</div>
+      ${groups.map((g, i) => { const [blurb, s, ic] = SECTION[g] || ["Word collections", i, "ic_collections"];
+        return `<div data-r>${sectionCard(g, blurb, s, ic, `#/section/${encodeURIComponent(g)}`)}</div>`; }).join("")}
+      <div class="home-head" data-r><span class="wm semi">Vocabulary quiz</span></div>
+      <div data-r>${challengeBanner()}</div>
+      ${recents.length ? `<div class="home-head" data-r style="padding-bottom:2px"><span class="wm semi">Recent searches</span></div>
+        <div class="hrows">${recents.map((e) => `<div class="hrow-wrap" data-r><a class="hrow" href="#/word/${e.id}">${wordRow(e)}</a></div>`).join("")}</div>` : ""}
+      <div class="home-bottom"></div>
+    </div>`;
+  view.querySelectorAll(".wm").forEach(Motion.syncFlow);
+  view.querySelectorAll("[data-r]").forEach((el) => tracker.add(el));
+  view.querySelector("#menu").onclick = () => go("#/lists/saved");
+  wireSearch(view);
 }
 
 function searchBox(q) {
@@ -265,7 +423,7 @@ function wireSearch() {
   return { input, show };
 }
 async function searchPage(q) {
-  $app.innerHTML = searchBox(q);
+  $view.innerHTML = searchBox(q);
   const { input, show } = wireSearch();
   show();
   input.focus();
@@ -276,7 +434,7 @@ async function wordPage(id, seed) {
   if (!e) return notFound();
   seed ??= randomSeed();
   addRecent(id);
-  $app.innerHTML = `<div class="word-page"><div class="word-head" style="background:${gradient(seed)}">
+  $view.innerHTML = `<div class="word-page"><div class="word-head" style="background:${gradient(seed)}">
       <h1>${esc(e.word)}</h1><div class="pos">${pos(e.type)}</div></div>
       <div id="body"><div class="loading">Loading…</div></div></div>
     <div class="tray">
@@ -327,7 +485,7 @@ function speak(word) {
 async function sectionPage(group) {
   const cols = (await collections()).filter((c) => c.group === group);
   const [blurb] = SECTIONS[group] || [""];
-  $app.innerHTML = topBar(group) + `<div class="note">${esc(blurb)}</div>
+  $view.innerHTML = topBar(group) + `<div class="note">${esc(blurb)}</div>
     <div class="grid fade">${cols.map((c, i) => `<a class="card" style="background:${gradient(i * 3 + 1)}" href="#/collection/${c.id}">
       <h3>${esc(c.title)}</h3><p>${esc(c.blurb)}</p></a>`).join("")}</div>`;
 }
@@ -348,7 +506,7 @@ async function collectionPage(id, items, head) {
     document.getElementById("list").innerHTML = shown.map(row).join("");
     document.querySelectorAll(".chip").forEach((ch) => ch.classList.toggle("on", ch.dataset.s === sort));
   };
-  $app.innerHTML = topBar("") + `<div class="col-head fade" style="background:${gradient(seed)}">
+  $view.innerHTML = topBar("") + `<div class="col-head fade" style="background:${gradient(seed)}">
       <div class="grp">${esc(c.group || "")}</div><h2>${esc(c.title)}</h2><p>${esc(c.blurb || "")}</p></div>
     <div class="chips">${SORTS.map((s) => `<button class="chip" data-s="${s}">${s === "Shuffle" ? "⚄ " : ""}${s}</button>`).join("")}</div>
     <div class="rows" id="list"></div>`;
@@ -359,7 +517,7 @@ async function collectionPage(id, items, head) {
 async function familiesPage() {
   const { families } = await extras();
   const themes = [...new Set(families.map((f) => f.theme))];
-  $app.innerHTML = topBar("Word families") + `<div class="note">Learn one Greek or Latin root and you can work out a whole family of words.</div>` +
+  $view.innerHTML = topBar("Word families") + `<div class="note">Learn one Greek or Latin root and you can work out a whole family of words.</div>` +
     themes.map((t) => `<div class="group-label">${esc(t)}</div><div class="grid">${families.filter((f) => f.theme === t)
       .map((f, i) => `<a class="card" style="background:${gradient(i * 3 + 2)}" href="#/family/${f.id}">
         <h3>${esc(f.root.split("·")[0].trim())}</h3><p>${esc(f.meaning)}</p></a>`).join("")}</div>`).join("");
@@ -385,7 +543,7 @@ function listsPage(tab) {
     body = rows.length ? `<div class="rows">${rows.map(row).join("")}</div>`
       : `<div class="empty"><h2>${tab === "recent" ? "Nothing yet" : "No saved words yet"}</h2>${tab === "recent" ? "Words you open show up here." : "Tap the bookmark on any word to keep it here."}</div>`;
   }
-  $app.innerHTML = topBar("My lists") + `<div class="chips">${tabs.map(([k, label]) =>
+  $view.innerHTML = topBar("My lists") + `<div class="chips">${tabs.map(([k, label]) =>
     `<a class="chip ${k === tab ? "on" : ""}" href="#/lists/${k}">${label}</a>`).join("")}</div>${body}`;
   document.getElementById("copy")?.addEventListener("click", () => {
     navigator.clipboard?.writeText(wishlist().map((r) => r.word).join("\n"));
@@ -407,7 +565,7 @@ function lookPage(raw) {
   const pills = list.filter((e) => !seen.has(e.id) && seen.add(e.id));
   const render = () => {
     const on = onWishlist(picked);
-    $app.innerHTML = topBar("") + `<div class="note fade" style="font:600 22px/1.3 Outfit,sans-serif;color:var(--ink)">
+    $view.innerHTML = topBar("") + `<div class="note fade" style="font:600 22px/1.3 Outfit,sans-serif;color:var(--ink)">
         “${esc(picked)}” isn't in Wordly yet${pills.length ? (related ? ", but these are:" : ". Did you mean:") : "."}</div>
       <div class="pills">${pills.map((e) => `<a class="pill" href="#/word/${e.id}">${esc(e.word)}<small>${pos(e.type)}</small></a>`).join("")}</div>
       <div class="actions"><button class="btn" id="wish">${on ? "On Wishlist ✓" : "Add to Wishlist"}</button>
@@ -418,41 +576,88 @@ function lookPage(raw) {
 }
 
 function notFound() {
-  $app.innerHTML = topBar("") + `<div class="empty"><h2>Not found</h2><a class="btn filled" href="#/">Go home</a></div>`;
+  $view.innerHTML = topBar("") + `<div class="empty"><h2>Not found</h2><a class="btn filled" href="#/">Go home</a></div>`;
 }
 
 // ---- router --------------------------------------------------------------
+let currentKind = null;       // "word" or "page": decides the transition
+let currentKey = null;
+let firstRoute = true;
+
 async function route() {
   const [path, query] = location.hash.replace(/^#/, "").split("?");
   const parts = path.split("/").filter(Boolean).map(decodeURIComponent);
   const params = new URLSearchParams(query || "");
+
+  // Back or forward? Each history entry remembers its place in the trail.
+  let returning = false;
+  const st = history.state;
+  if (st && typeof st.i === "number") {
+    returning = st.i < navIndex;
+    navIndex = st.i;
+  } else {
+    navIndex += 1;
+    history.replaceState({ i: navIndex }, "");
+  }
+
   try {
     await loadIndex();
   } catch {
     $app.innerHTML = `<div class="empty"><h2>Can't reach Wordly</h2>Connect to the internet once so Wordly can download its words.</div>`;
+    document.getElementById("splash")?.remove();
     return;
   }
-  switch (parts[0]) {
-    case "word": return wordPage(Number(parts[1]), params.has("c") ? Number(params.get("c")) : undefined);
-    case "search": return searchPage(parts.slice(1).join("/"));
-    case "look": return lookPage(parts.slice(1).join("/"));
-    case "section": return sectionPage(parts[1]);
-    case "collection": return collectionPage(parts[1]);
-    case "families": return familiesPage();
-    case "family": return familyPage(parts[1]);
-    case "lists": return listsPage(parts[1] || "saved");
-    case "random": {
-      const pool = data.index.filter((e) => !e.word.includes(" "));
-      return location.replace(`#/word/${pool[Math.floor(Math.random() * pool.length)].id}`);
-    }
-    default: return home();
+
+  // Redirects (no screen of their own).
+  if (parts[0] === "random") {
+    const pool = data.index.filter((e) => e.f);
+    return location.replace(`#/word/${pool[Math.floor(Math.random() * pool.length)].id}`);
   }
+
+  const key = path || "/";
+  const kind = parts[0] === "word" ? "word" : "page";
+  if (currentKey) scrolls.set(currentKey, scrollY);
+
+  // The new screen is built in its own layer; the old one stays on top (fixed
+  // where it was) while the two cross over, then leaves.
+  const old = $view;
+  if (old) old.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
+  tracker && tracker.dispose();
+  tracker = new Motion.RevealTracker({ firstDelay: firstRoute ? 0 : 250, returning });
+  $view = newView();
+  $app.appendChild($view);
+
+  switch (parts[0]) {
+    case "word": await wordPage(Number(parts[1]), params.has("c") ? Number(params.get("c")) : undefined); break;
+    case "search": await searchPage(parts.slice(1).join("/")); break;
+    case "look": lookPage(parts.slice(1).join("/")); break;
+    case "section": await sectionPage(parts[1]); break;
+    case "collection": await collectionPage(parts[1]); break;
+    case "families": await familiesPage(); break;
+    case "family": await familyPage(parts[1]); break;
+    case "lists": listsPage(parts[1] || "saved"); break;
+    default: await home($view);
+  }
+
+  const transitionKind = kind === "word" ? "toWord" : currentKind === "word" ? "fromWord" : "fade";
+  if (firstRoute) {
+    // First screen: the splash lifts away and the cards rise as it goes.
+    document.getElementById("splash") && Motion.liftSplash();
+    old && old.remove();
+  } else {
+    Motion.transition(old, $view, transitionKind);
+  }
+  scrollTo(0, returning ? scrolls.get(key) || 0 : 0);
+  tracker.open(performance.now());
+  firstRoute = false;
+  currentKind = kind;
+  currentKey = key;
 }
 addEventListener("hashchange", route);
+history.scrollRestoration = "manual";
 // Support links like ".../?look=word" too (easier to build in Shortcuts).
 const startLook = new URLSearchParams(location.search).get("look");
 if (startLook) history.replaceState(null, "", location.pathname + "#/look/" + encodeURIComponent(startLook));
-$app.innerHTML = `<div class="loading">Loading Wordly…</div>`;
 route();
 
 // Offline: keep the app and every word already read on this device.
