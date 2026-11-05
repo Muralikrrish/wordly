@@ -19,6 +19,23 @@
 <link rel="stylesheet" href="search.css">
 <link rel="stylesheet" href="lists.css">
 <link rel="stylesheet" href="quiz.css">
+<link rel="stylesheet" href="settings.css">
+<script>
+// Before anything draws: the saved theme's paper colour and the status bar's
+// ink (light text on dark paper, dark text on cream), so nothing flashes.
+(function () {
+  var s = {}; try { s = JSON.parse(localStorage.getItem("settings")) || {}; } catch (e) {}
+  var mode = s.mode || "SYSTEM";
+  var dark = mode === "DARK" || (mode !== "LIGHT" && matchMedia("(prefers-color-scheme: dark)").matches);
+  var bg = { CLASSIC: ["#F5EFE5", "#181613"], OCEAN: ["#F3F0E8", "#13171B"], SUNSET: ["#F6EFE4", "#191512"],
+    ORCHID: ["#F4F0EA", "#17151D"], FOREST: ["#F2F0E6", "#141915"] }[s.theme || "OCEAN"] || ["#F3F0E8", "#13171B"];
+  var c = dark ? bg[1] : bg[0];
+  document.documentElement.style.setProperty("--bg", c);
+  document.documentElement.style.background = c;
+  document.querySelector('meta[name="theme-color"]').setAttribute("content", c);
+  if (!dark) document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').setAttribute("content", "default");
+})();
+</script>
 </head>
 <body>
 <!-- The splash: the app's ribbon "W" on the window colour; it glides up into
@@ -36,10 +53,12 @@
 <main id="app"></main>
 <script src="icons.js"></script>
 <script src="motion.js"></script>
+<script src="settings.js"></script>
 <script src="word.js"></script>
 <script src="search.js"></script>
 <script src="lists.js"></script>
 <script src="quiz.js"></script>
+<script src="menu.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

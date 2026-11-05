@@ -10,10 +10,10 @@ const Word = (() => {
 
   // ---- colours -------------------------------------------------------------
   const rgbOf = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
-  // The word's own colour, softened 42% towards white for the dark page.
+  // The word's own colour, softened 42% towards white on the dark page (as is on the cream one).
   function accentOf(seed) {
     const [r, g, b] = rgbOf(PALETTE[((seed % 10) + 10) % 10][0]);
-    const m = (c) => Math.round(c + (255 - c) * 0.42);
+    const m = (c) => (Settings.isDark() ? Math.round(c + (255 - c) * 0.42) : c);
     return [m(r), m(g), m(b)];
   }
 
@@ -130,9 +130,11 @@ const Word = (() => {
     const gap = 22 * 0.13, w = (22 - gap * 3) / 4;
     return `<rect x="${(i * (w + gap)).toFixed(2)}" width="${w.toFixed(2)}" rx="${(w / 2).toFixed(2)}" fill="currentColor"/>`;
   }).join("")}</svg>`;
-  const GOLD = "#FFCB6B";
+  // The saved gold (a deeper amber on the light glass) and the tray's ink.
+  const GOLD = "var(--saved)";
+  const glassRgb = () => (Settings.isDark() ? ["255,203,107", "255,255,255"] : ["199,136,26", "38,40,46"]);
 
-  function tray(entry, onBack) {
+  function tray(entry, onBack, seed) {
     const el = document.createElement("div");
     el.className = "tray2";
     const saved = () => isSaved(entry.id);
@@ -144,7 +146,7 @@ const Word = (() => {
       <button class="slot" data-press="tray" data-k="share" aria-label="Share this word"><span class="sh" style="display:block;width:21px;height:21px">${ICONS.ic_share}</span></button>
     </div>`;
     const mk = el.querySelector(".mk");
-    mk.style.cssText = `display:block;width:24px;height:24px;color:${saved() ? GOLD : "#fff"}`;
+    mk.style.cssText = `display:block;width:24px;height:24px;color:${saved() ? GOLD : "var(--tray-ink)"}`;
     el.querySelector(".sh svg").style.cssText = "width:21px;height:21px";
     mk.querySelector("svg").style.cssText = "width:24px;height:24px";
     const stopEq = equalizer(el.querySelector('[data-k="listen"] svg'));
@@ -182,18 +184,20 @@ const Word = (() => {
     }
     // Tap ripple (480 ms, LinearOutSlowIn): a soft disc and a ring swelling out.
     const ripple = (c, x, y, t) => {
+      const W = glassRgb()[1];
       const out = 1 - (1 - t) * (1 - t);
-      c.fillStyle = `rgba(255,255,255,${0.10 * (1 - t)})`;
+      c.fillStyle = `rgba(${W},${0.10 * (1 - t)})`;
       c.beginPath(); c.arc(x, y, 16 + 10 * out, 0, Math.PI * 2); c.fill();
-      c.strokeStyle = `rgba(255,255,255,${0.55 * (1 - t)})`;
+      c.strokeStyle = `rgba(${W},${0.55 * (1 - t)})`;
       c.lineWidth = 1.6 * (1 - t) + 0.4;
       c.beginPath(); c.arc(x, y, 16 + 18 * out, 0, Math.PI * 2); c.stroke();
     };
     // Save splash (820 ms): a gold ring, then two rings of gold/white dots.
     const burst = (c, x, y, t) => {
+      const [G, W] = glassRgb();
       const out = 1 - (1 - t) ** 3;
       const rt = Math.min(1, t / 0.7), rout = 1 - (1 - rt) * (1 - rt);
-      c.strokeStyle = `rgba(255,203,107,${(1 - rt) * 0.9})`;
+      c.strokeStyle = `rgba(${G},${(1 - rt) * 0.9})`;
       c.lineWidth = 3 * (1 - rt) + 0.5;
       c.beginPath(); c.arc(x, y, 12 + 22 * rout, 0, Math.PI * 2); c.stroke();
       const fade = t < 0.55 ? 1 : (1 - t) / 0.45;
@@ -203,7 +207,7 @@ const Word = (() => {
         const reach = outer ? 40 : 27;
         const dd = 10 + (reach - 10) * out;
         const rr = (outer ? 4.2 : 3.0) * (1 - 0.55 * out);
-        c.fillStyle = (i % 4 === 0 || i % 4 === 3) ? `rgba(255,203,107,${fade})` : `rgba(255,255,255,${fade})`;
+        c.fillStyle = (i % 4 === 0 || i % 4 === 3) ? `rgba(${G},${fade})` : `rgba(${W},${fade})`;
         c.beginPath(); c.arc(x + Math.cos(a) * dd, y + Math.sin(a) * dd, rr, 0, Math.PI * 2); c.fill();
       }
     };
@@ -229,16 +233,11 @@ const Word = (() => {
       } else if (k === "font") {
         const A = b.querySelector(".A"), a = b.querySelector(".a");
         kick((v) => { A.style.transform = `scale(${(1 + 0.22 * v).toFixed(4)})`; a.style.transform = `translateY(${(-4 * Math.max(0, v)).toFixed(2)}px)`; });
-        // Font settings arrive with stage 6; until then the "Aa" just answers the tap.
-        if (window.FONT_SETTINGS) setTimeout(() => go("#/settings/font"), 170);
+        setTimeout(() => go("#/settings/font"), 170);
       } else if (k === "share") {
         const svg = b.querySelector(".sh");
         kick((v) => { svg.style.transform = `translate(${(2 * v).toFixed(2)}px, ${(-2 * v).toFixed(2)}px) rotate(${(-24 * v).toFixed(2)}deg)`; });
-        const text = `${entry.word} (${pos(entry.type)}): ${entry.preview || ""}`;
-        setTimeout(() => {
-          if (navigator.share) navigator.share({ title: entry.word, text, url: location.href }).catch(() => {});
-          else navigator.clipboard?.writeText(text + "\n" + location.href);
-        }, 200);
+        setTimeout(() => Menu.shareWord(entry, seed), 200);
       } else if (k === "mark") {
         // A word already kept (Saved or any list) opens the "My lists" sheet;
         // otherwise the tap saves it, with the gold pop and the saved note.
@@ -251,7 +250,7 @@ const Word = (() => {
         mk.animate([{ opacity: 0.3 }, { opacity: 1 }], { duration: 200 });
         mk.innerHTML = on ? ICONS.ic_bookmark_filled : ICONS.ic_bookmark_outline;
         mk.querySelector("svg").style.cssText = "width:24px;height:24px";
-        mk.style.color = on ? GOLD : "#fff";
+        mk.style.color = on ? GOLD : "var(--tray-ink)";
         if (on) {
           new Spring(0.55, { damping: 0.36, stiffness: 520, onUpdate: (v) => { mk.style.transform = `scale(${v.toFixed(4)})`; } }).to(1);
           addFx(b, 820, ease.linearOutSlowIn, burst);
@@ -263,7 +262,7 @@ const Word = (() => {
       const on = Lists.keptAnywhere(entry.id);
       mk.innerHTML = on ? ICONS.ic_bookmark_filled : ICONS.ic_bookmark_outline;
       mk.querySelector("svg").style.cssText = "width:24px;height:24px";
-      mk.style.color = on ? GOLD : "#fff";
+      mk.style.color = on ? GOLD : "var(--tray-ink)";
     }
     el.refreshMark = refreshMark;
     el.cleanup = () => stopEq();
@@ -388,7 +387,7 @@ const Word = (() => {
       new Spring(0.9, { damping: 0.4, stiffness: 420, onUpdate: (v) => { pop = v; fold(); } }).to(1);
     });
 
-    const t = tray(e, () => history.back());
+    const t = tray(e, () => history.back(), seed);
     view.appendChild(t);
     view.cleanup = () => { removeEventListener("scroll", onScroll); t.cleanup(); document.querySelector(".savednote")?.remove(); };
 
@@ -403,7 +402,7 @@ const Word = (() => {
     const mixes = ex.mixups.filter((m) => m.items.some(([eid]) => eid === id));
     const fams = ex.families.filter((f) => f.items.includes(id));
     const hasAfter = story || mixes.length || fams.length;
-    bodyIn.innerHTML = `${intro ? `<div class="dprose intro">${intro}</div><div style="height:${(17.5 * 0.4 + 18).toFixed(1)}px"></div>` : ""}
+    bodyIn.innerHTML = `${intro ? `<div class="dprose intro">${intro}</div><div style="height:${(Settings.paraGap() + 18).toFixed(1)}px"></div>` : ""}
       ${hasAfter ? `<div class="after">${story ? storyCard(story) : ""}${mixCard(mixes, id)}${familyCards(fams, id)}</div><div style="height:22px"></div>` : ""}
       <div class="secs">${sections.map(([h], i) => `<div class="sec2" data-i="${i}"><div class="shd" data-press="0.975"><span class="abar"></span>
         <span class="title">${esc(h)}</span><span class="chev">${CHEV}</span></div><div class="body"></div></div>`).join("")}</div>

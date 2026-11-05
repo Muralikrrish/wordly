@@ -21,28 +21,28 @@
 .chips-in { padding: 8px 20px 6px; }
 .rhead { display: flex; align-items: center; margin-bottom: 8px; }
 .rhead span:first-child { flex: 1; font: 600 12px Outfit, sans-serif; letter-spacing: 1.2px; color: var(--accent); }
-.seeall { display: inline-flex; align-items: center; padding: 4px 6px 4px 12px; border-radius: 999px; background: rgba(147,194,216,.12);
+.seeall { display: inline-flex; align-items: center; padding: 4px 6px 4px 12px; border-radius: 999px; background: rgba(var(--accent-rgb),.12);
   font: 600 13px Outfit, sans-serif; color: var(--accent); }
 .seeall .chev { width: 18px; height: 18px; display: inline-block; }
 .seeall .chev svg { width: 18px; height: 18px; display: block; }
 .chipflow { display: flex; flex-wrap: wrap; gap: 8px; }
 .rchip { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px 9px 12px; border-radius: 999px; background: var(--container);
-  border: 1px solid rgba(236,232,223,.06); font: 400 15px Outfit, sans-serif; color: var(--ink); white-space: nowrap; }
+  border: 1px solid rgba(var(--ink-rgb),.06); font: 400 15px Outfit, sans-serif; color: var(--ink); white-space: nowrap; }
 .rchip .clock { width: 15px; height: 15px; color: var(--muted); display: inline-block; }
 .rchip .clock svg { width: 15px; height: 15px; display: block; }
 
 .rrow { padding: 0 10px; }
 .rlink { display: block; padding: 0 12px; border-radius: 14px; }
-.rlink:active { background: rgba(236,232,223,.06); }
-.rdiv { height: 1px; margin: 0 12px; background: rgba(236,232,223,.14); }
-.wrow .dim { color: rgba(236,232,223,.80); }
+.rlink:active { background: rgba(var(--ink-rgb),.06); }
+.rdiv { height: 1px; margin: 0 12px; background: rgba(var(--ink-rgb),.14); }
+.wrow .dim { color: rgba(var(--ink-rgb),.80); }
 .wrow .dim b { color: var(--ink); font-weight: 600; }
 .dym { padding: 22px 24px 6px; }
 .dym .nx { font: 400 15px Outfit, sans-serif; color: var(--muted); }
 .dym .k { margin-top: 20px; font: 600 12px Outfit, sans-serif; letter-spacing: 1.2px; color: var(--accent); }
 
 .empty2 { padding: 0 36px; text-align: center; }
-.empty2 .disc { width: 96px; height: 96px; border-radius: 50%; background: rgba(147,194,216,.12); border: 1px solid rgba(147,194,216,.20);
+.empty2 .disc { width: 96px; height: 96px; border-radius: 50%; background: rgba(var(--accent-rgb),.12); border: 1px solid rgba(var(--accent-rgb),.20);
   display: inline-grid; place-items: center; color: var(--accent); }
 .empty2 .float { width: 40px; height: 40px; display: block; animation: float2 2.6s cubic-bezier(.4,0,.2,1) infinite alternate; }
 .empty2 .float svg { width: 40px; height: 40px; display: block; }

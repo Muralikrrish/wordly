@@ -5,6 +5,7 @@
      #/section/<group>      a section       #/collection/<id>
      #/families, #/family/<id>              #/lists/<tab>    Saved / Recent / Wishlist
      #/quiz  (Word Challenge)  #/quiz/play  (a round)  #/quiz/words  (Your words)
+     #/collections  #/settings[/font|/layout]  #/more  #/about  #/privacy
    Data comes from data/ (built by tools/build_web.py); definitions load in
    small files only when a word is opened. Saved words etc. stay on this device. */
 "use strict";
@@ -27,6 +28,7 @@ const shading = (i) => {
   return [[0, soft], [0.38, mid], [0.78, mid], [1, lerpHex(mid, deep, 0.55)]];
 };
 const gradient = (i) => `linear-gradient(135deg, ${shading(i).map(([s, c]) => `${c} ${s * 100}%`).join(", ")})`;
+Settings.apply();            // the saved theme and reading settings (settings.js)
 const randomSeed = () => Math.floor(Math.random() * 10);
 const POS = { n: "noun", v: "verb", adj: "adjective", adv: "adverb", prep: "preposition",
   conj: "conjunction", intj: "interjection", idm: "idiom", phr: "phrasal verb",
@@ -364,7 +366,7 @@ async function home(view, opts = {}) {
     </div>`;
   view.querySelectorAll(".wm").forEach(Motion.syncFlow);
   view.querySelectorAll("[data-r]").forEach((el) => tracker.add(el));
-  view.querySelector("#menu").onclick = () => go("#/lists/saved");
+  view.querySelector("#menu").onclick = () => Menu.open();
   Quiz.wireBanner(view);
   Search.attach(view, { hero: view.querySelector("#hero"), body: view.querySelector("#home-body"), ...opts });
 }
@@ -387,6 +389,29 @@ const collectionPage = (id, opts) => Lists.collectionPage($view, id, opts);
 const familiesPage = () => Lists.familiesPage($view);
 const familyPage = (id, opts) => Lists.familyPage($view, id, opts);
 const listsPage = (tab) => Lists.listsPage($view, tab);
+
+// Every collection on one page (CollectionsScreen): exam prep, then "More
+// collections" with Word families and each section; "Surprise me" fills the
+// gap beside an odd last card, or runs full width at the end.
+async function collectionsPage() {
+  const cols = await collections();
+  const open = cols.filter((c) => c.group === OPEN_SECTION);
+  const groups = [...new Set(cols.map((c) => c.group))].filter((g) => g !== OPEN_SECTION);
+  const rows = [];
+  for (let i = 0; i < open.length; i += 2) {
+    const pair = open.slice(i, i + 2);
+    rows.push(`<div class="crow" data-r>${pair.map((c, j) => collectionCard(c, i + j)).join("")}${pair.length === 1 ? surpriseTile() : ""}</div>`);
+  }
+  $view.innerHTML = Settings.subBar("Collections") + `<div class="cintro" data-r>Explore words by exam, by topic, or just for the fun of it.</div>
+    <div style="height:14px"></div><div class="cgrid">${rows.join("")}</div>
+    <div class="glabel" data-r>More collections</div>
+    <div data-r>${sectionCard("Word families", "Learn one Greek or Latin root, unlock a whole family of words", 3, "ic_col_root", "#/families")}</div>
+    ${groups.map((g, i) => { const [blurb, s, ic] = SECTION[g] || ["Word collections", i, "ic_collections"];
+      return `<div data-r>${sectionCard(g, blurb, s, ic, `#/section/${encodeURIComponent(g)}`)}</div>`; }).join("")}
+    ${open.length % 2 === 0 ? `<div class="cgrid" data-r style="padding-top:2px">${surpriseTile()}</div>` : ""}<div style="height:32px"></div>`;
+  Settings.wireBack($view);
+  $view.querySelectorAll("[data-r]").forEach((el) => tracker.add(el));
+}
 
 // Look up text picked in another app (the iPhone Share shortcut opens this).
 function lookPage(raw) {
@@ -474,6 +499,11 @@ async function route() {
     case "families": await familiesPage(); break;
     case "family": await familyPage(parts[1], { returning }); break;
     case "lists": listsPage(parts[1] || "saved"); break;
+    case "collections": await collectionsPage(); break;
+    case "settings": (parts[1] === "font" ? Settings.fontPage : parts[1] === "layout" ? Settings.layoutPage : Settings.settingsPage)($view); break;
+    case "more": Menu.morePage($view); break;
+    case "about": Menu.aboutPage($view); break;
+    case "privacy": Menu.privacyPage($view); break;
     case "quiz": await (parts[1] === "play" ? Quiz.playPage($view, { returning })
       : parts[1] === "words" ? Quiz.wordsPage($view, params.get("tab")) : Quiz.hubPage($view)); break;
     default: await home($view);

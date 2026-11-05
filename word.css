@@ -22,25 +22,26 @@
 
 /* Definition text in the reader's font (Literata 17.5 by default). Paragraph
    gap = size × 0.4; list items 7 dp apart; headings h1–h6 at the app's sizes. */
-.dprose { padding: 0 16px; font-family: Literata, Georgia, serif; font-size: 17.5px; line-height: normal; color: var(--ink); }
-.dprose p, .dprose ul, .dprose ol, .dprose blockquote, .dprose .table, .dprose hr { margin: 0 0 7px; }
+.dprose { padding: 0 var(--read-margin); font-family: var(--read-font); font-size: var(--read-size); line-height: var(--read-lh);
+  word-spacing: var(--read-word); letter-spacing: var(--read-letter); color: var(--ink); }
+.dprose p, .dprose ul, .dprose ol, .dprose blockquote, .dprose .table, .dprose hr { margin: 0 0 var(--read-para); }
 .dprose > :last-child { margin-bottom: 0; }
-.dprose h1, .dprose h2, .dprose h3, .dprose h4, .dprose h5, .dprose h6 { font-weight: 600; margin: 0 0 7px; line-height: normal; }
+.dprose h1, .dprose h2, .dprose h3, .dprose h4, .dprose h5, .dprose h6 { font-weight: 600; margin: 0 0 var(--read-para); line-height: var(--read-lh); }
 .dprose h1 { font-size: 1.5em; } .dprose h2 { font-size: 1.28em; } .dprose h3 { font-size: 1.13em; }
 .dprose h4 { font-size: 1.04em; } .dprose h5 { font-size: 1em; } .dprose h6 { font-size: .95em; }
 .dprose strong { font-weight: 600; }
 .dprose ul, .dprose ol { padding-left: 18px; }
-.dprose li { margin-bottom: 7px; }
+.dprose li { margin-bottom: var(--read-para); }
 .dprose li:last-child { margin-bottom: 0; }
 .dprose ul li::marker { font-size: .8em; }
-.dprose blockquote { padding-left: 15px; border-left: 3px solid rgba(236,232,223,.25); }
+.dprose blockquote { padding-left: 15px; border-left: 3px solid rgba(var(--ink-rgb),.25); }
 .dprose blockquote p { margin-bottom: 4px; }
-.dprose hr { border: 0; height: 1px; background: rgba(236,232,223,.14); }
+.dprose hr { border: 0; height: 1px; background: rgba(var(--ink-rgb),.14); }
 .dprose .table { overflow-x: auto; }
 .dprose table { border-collapse: collapse; min-width: 100%; font-size: 0.9em; }
-.dprose th, .dprose td { padding: 9px; border: 1px solid rgba(236,232,223,.14); vertical-align: top; text-align: left; }
+.dprose th, .dprose td { padding: 9px; border: 1px solid rgba(var(--ink-rgb),.14); vertical-align: top; text-align: left; }
 .dprose th { font-weight: 600; }
-.dprose tbody tr:nth-child(odd) td { background: rgba(236,232,223,.04); }
+.dprose tbody tr:nth-child(odd) td { background: rgba(var(--ink-rgb),.04); }
 .dprose code { font-family: inherit; }
 /* A word in the line reveal: moves as a box, but lays out like plain text
    (spaces sit outside it); no forced layer, so text renders the same at rest. */
@@ -48,7 +49,7 @@
 .rv-line { will-change: transform, opacity; }
 
 /* Story, "Don't mix it up", word family (between the opening and the sections). */
-.after { padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }
+.after { padding: 0 var(--read-margin); display: flex; flex-direction: column; gap: 12px; }
 .wcard { border-radius: 22px; padding: 16px 18px 18px; background: var(--acc08); border: 1px solid var(--acc22); }
 .wcard .hd { display: flex; align-items: center; gap: 12px; }
 .wcard .disc { width: 36px; height: 36px; border-radius: 50%; background: var(--acc16); display: grid; place-items: center; color: var(--acc); flex: none; }
@@ -63,7 +64,7 @@
 .mix .mrow.cur b { color: var(--acc); }
 .mix .mrow i { font: italic 400 13px Outfit, sans-serif; color: var(--muted); }
 .mix .mrow .go { margin-left: auto; font: 400 20px Outfit, sans-serif; color: var(--acc); }
-.mix .mrow .m { font: 400 15px/21px Outfit, sans-serif; color: rgba(236,232,223,.85); }
+.mix .mrow .m { font: 400 15px/21px Outfit, sans-serif; color: rgba(var(--ink-rgb),.85); }
 .mix .tip { margin-top: 6px; font: italic 400 14.5px/20px Outfit, sans-serif; color: var(--muted); }
 .fam { padding-bottom: 10px; }
 .fam .root { font: 400 17px Outfit, sans-serif; color: var(--ink); }
@@ -75,12 +76,12 @@
 .fam .all { display: inline-block; margin-top: 4px; padding: 10px 0; font: 600 15px Outfit, sans-serif; color: var(--acc); }
 
 /* Section cards: a soft tint of the word's colour; tinted deeper when open. */
-.secs { padding: 0 16px; }
+.secs { padding: 0 var(--read-margin); }
 .sec2 + .sec2 { margin-top: 10px; }
 .sec2 .shd { display: flex; align-items: stretch; gap: 13px; padding: 14px 12px 14px 14px; border-radius: 18px; cursor: pointer;
   background: rgba(var(--acc-rgb), calc(.08 + .06 * var(--open, 0))); border: 1px solid rgba(var(--acc-rgb), calc(.16 + .18 * var(--open, 0))); }
 .sec2 .abar { width: 4px; border-radius: 2px; flex: none; background: linear-gradient(var(--acc), rgba(var(--acc-rgb), .3)); }
-.sec2 .title { flex: 1; align-self: center; font-family: Literata, Georgia, serif; font-weight: 600; font-size: 16.5px; line-height: 1.28; color: var(--ink); }
+.sec2 .title { flex: 1; align-self: center; font-family: var(--read-font); font-weight: 600; font-size: var(--read-title); line-height: 1.28; color: var(--ink); }
 .sec2 .chev { width: 32px; height: 32px; border-radius: 50%; align-self: center; flex: none; display: grid; place-items: center;
   background: rgba(var(--acc-rgb), calc(.16 + .14 * var(--open, 0))); color: var(--acc); }
 .sec2 .chev svg { width: 22px; height: 22px; transform: rotate(calc(180deg * var(--open, 0))); }
@@ -102,9 +103,9 @@
 /* The floating glass tray. */
 .tray2 { position: fixed; left: 50%; bottom: calc(16px + var(--bottom)); z-index: 20; transform: translateX(-50%); }
 .tray2 .glass { display: flex; gap: 4px; padding: 5px 8px; border-radius: 999px;
-  background: rgba(35, 38, 47, .37); -webkit-backdrop-filter: blur(22px) saturate(1.2); backdrop-filter: blur(22px) saturate(1.2);
-  border: 1px solid rgba(255,255,255,.22); box-shadow: 0 10px 28px rgba(0,0,0,.45); }
-.tray2 .slot { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: #fff; cursor: pointer; position: relative; }
+  background: var(--glass); -webkit-backdrop-filter: blur(22px) saturate(1.2); backdrop-filter: blur(22px) saturate(1.2);
+  border: 1px solid var(--glass-edge); box-shadow: 0 10px 28px rgba(0,0,0,var(--glass-shadow)); }
+.tray2 .slot { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: var(--tray-ink); cursor: pointer; position: relative; }
 .tray2 .slot svg { display: block; }
 .tray2 .fx { position: absolute; left: -60px; right: -60px; top: -60px; bottom: -60px; pointer-events: none; }
 .tray2 .aa { display: flex; align-items: flex-end; font-family: Outfit, sans-serif; font-weight: 600; }
@@ -112,6 +113,6 @@
 .tray2 .aa .a { font-size: 15px; line-height: 15px; margin-left: 1px; display: inline-block; }
 .savednote { position: fixed; left: 50%; bottom: calc(96px + var(--bottom)); z-index: 21; transform: translateX(-50%);
   display: flex; align-items: center; padding: 0 6px 0 20px; border-radius: 999px; background: var(--surface);
-  border: 1px solid rgba(236,232,223,.10); box-shadow: 0 8px 24px rgba(0,0,0,.4); white-space: nowrap; }
+  border: 1px solid rgba(var(--ink-rgb),.10); box-shadow: 0 8px 24px rgba(0,0,0,.4); white-space: nowrap; }
 .savednote span { font: 400 15px Outfit, sans-serif; color: var(--ink); margin-right: 6px; }
 .savednote a { font: 600 15px Outfit, sans-serif; color: var(--accent); padding: 13px 12px; }

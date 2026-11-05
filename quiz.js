@@ -7,7 +7,7 @@
 
 const Quiz = (() => {
   const { Spring, tween, ease } = Motion;
-  const RIGHT = "#74C99E", WRONG = "#EB8F86";               // rightInk / wrongInk (dark)
+  const RIGHT = "var(--right)", WRONG = "var(--wrong)";               // rightInk / wrongInk
   const FLAME_TOP = "#FFC94F", FLAME_MID = "#FF8A3D", FLAME_BASE = "#E5484D";
   const RECALL_MISS = 9, LADDER_HINTS = 2;
   const ROUND = 10, PRACTICE_ROUND = 5, PRACTICE_ROUNDS = 4, DAILY_HARD = 5;
@@ -315,7 +315,7 @@ const Quiz = (() => {
   let flameN = 0;
   function flame(lit, size) {
     const k = ++flameN;
-    if (!lit) return `<svg class="flame" width="${size}" height="${size}" viewBox="0 0 24 24"><path d="${FLAME_OUTER}" fill="rgba(179,173,162,.30)"/></svg>`;
+    if (!lit) return `<svg class="flame" width="${size}" height="${size}" viewBox="0 0 24 24"><path d="${FLAME_OUTER}" fill="rgba(var(--muted-rgb),.30)"/></svg>`;
     return `<svg class="flame lit" width="${size}" height="${size}" viewBox="0 0 24 24" overflow="visible"><defs>
       <radialGradient id="fg${k}" cx="12" cy="14.88" r="14.88" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${FLAME_MID}" stop-opacity=".30"/><stop offset="1" stop-color="${FLAME_MID}" stop-opacity="0"/></radialGradient>
       <linearGradient id="fo${k}" x1="0" y1="1.5" x2="0" y2="22.5" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${FLAME_TOP}"/><stop offset=".5" stop-color="${FLAME_MID}"/><stop offset="1" stop-color="${FLAME_BASE}"/></linearGradient>
@@ -573,7 +573,7 @@ const Quiz = (() => {
     const stage = el.querySelector(".qstage"), nextBar = el.querySelector(".qnext");
     const segs = [...el.querySelectorAll(".segs i")];
     const paintTop = () => {
-      segs.forEach((g, i) => { const r = isRight(s, i); g.style.background = r === true ? RIGHT : r === false ? WRONG : i === s.index ? "rgba(147,194,216,.55)" : "rgba(236,232,223,.10)"; });
+      segs.forEach((g, i) => { const r = isRight(s, i); g.style.background = r === true ? RIGHT : r === false ? WRONG : i === s.index ? "rgba(var(--accent-rgb),.55)" : "rgba(var(--ink-rgb),.10)"; });
       el.querySelector(".qcount").textContent = `${s.index + 1}/${s.questions.length}`;
     };
     // The bar under an answered question: rises in on spring(0.8, 380), drops away in 200 ms.
@@ -776,8 +776,8 @@ const Quiz = (() => {
       tilesEl.style.gap = `${gap}px`;
       tilesEl.innerHTML = rows.map(([a, b]) => `<div class="trow2" style="gap:${gap}px">${Array.from({ length: b - a }, (_, k) => {
         const i = a + k, letter = answered ? answer[i] : e[i];
-        const bg = solved ? "rgba(116,201,158,.16)" : answered ? "rgba(235,143,134,.14)" : "var(--surface)";
-        const edge = solved ? "rgba(116,201,158,.7)" : answered ? "rgba(235,143,134,.6)" : i === activeAt ? "var(--accent)" : "rgba(236,232,223,.10)";
+        const bg = solved ? "rgba(var(--right-rgb),.16)" : answered ? "rgba(var(--wrong-rgb),.14)" : "var(--surface)";
+        const edge = solved ? "rgba(var(--right-rgb),.7)" : answered ? "rgba(var(--wrong-rgb),.6)" : i === activeAt ? "var(--accent)" : "rgba(var(--ink-rgb),.10)";
         const ink = solved ? RIGHT : answered ? WRONG : rv.has(i) ? "var(--accent)" : "var(--ink)";
         return `<span class="tile" style="width:${tile}px;height:${tile * 1.25}px;border-radius:${rad}px;background:${bg};box-shadow:inset 0 0 0 ${i === activeAt ? 1.5 : 1}px ${edge};color:${ink};font-size:${fs}px">${letter ? esc(letter) : ""}</span>`;
       }).join("")}</div>`).join("");
@@ -876,7 +876,7 @@ const Quiz = (() => {
         ${s.mode === MODE_PRACTICE ? `<div style="height:14px"></div><div class="rleft">${sum.practiceLeft === 0 ? `That's today's practice. More rounds in ${untilMidnight()}` : roundsLeft(sum.practiceLeft).replace(/^./, (c) => c.toUpperCase())}</div>`
           : `<div style="height:14px"></div><button class="tact" data-press="0.94" data-retake>${ic("ic_retake", 17)}${s.mode === MODE_DAILY ? "Retake for practice" : s.mode === MODE_PREVIEW ? "Retake these questions" : "Retake again"}</button>`}</div>
       <div style="height:28px"></div><div class="rwords"><div class="rwk">WORDS IN THIS ROUND</div>
-        ${s.questions.map((q, i) => { const ok = isRight(s, i) === true; return `<button class="rw" data-press="0.98" data-i="${i}"><span class="rwi" style="background:${ok ? "rgba(116,201,158,.16)" : "rgba(235,143,134,.16)"};color:${ok ? RIGHT : WRONG}">${ok ? CHECK : CLOSE}</span>
+        ${s.questions.map((q, i) => { const ok = isRight(s, i) === true; return `<button class="rw" data-press="0.98" data-i="${i}"><span class="rwi" style="background:${ok ? "rgba(var(--right-rgb),.16)" : "rgba(var(--wrong-rgb),.16)"};color:${ok ? RIGHT : WRONG}">${ok ? CHECK : CLOSE}</span>
           <span class="rww">${esc(q.word)}</span><span class="rwt">${pos(q.type)}</span><span class="rwa">${ARROW}</span></button>`; }).join("")}</div>
       <div style="height:28px"></div></div></div>${celebrate && score * 10 >= total * 7 ? `<canvas class="confetti"></canvas>` : ""}`;
     el.querySelector("[data-close]").onclick = leave;
@@ -932,7 +932,7 @@ const Quiz = (() => {
       ctx.clearRect(0, 0, size, size);
       const stroke = 16, r = (size - stroke) / 2, c = size / 2;
       ctx.lineWidth = stroke;
-      ctx.strokeStyle = "rgba(236,232,223,.08)";
+      ctx.strokeStyle = `rgba(${getComputedStyle(document.documentElement).getPropertyValue("--ink-rgb")},.08)`;
       ctx.beginPath(); ctx.arc(c, c, r, 0, Math.PI * 2); ctx.stroke();
       const sweep = Math.PI * 2 * p;
       if (sweep > 0.5 * Math.PI / 180) {
@@ -1044,15 +1044,8 @@ const Quiz = (() => {
     const blob = await new Promise((res) => cv.toBlob(res, "image/png"));
     return { blob, message, name: `wordly-daily-${number}.png` };
   }
-  async function shareResult(number, pattern, streakN) {
-    const card = await resultCard(number, pattern, streakN);
-    const file = card.blob && new File([card.blob], card.name, { type: "image/png" });
-    try {
-      if (file && navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], text: card.message });
-      else if (navigator.share) await navigator.share({ text: card.message });
-      else { await navigator.clipboard.writeText(card.message); toast("Result copied"); }
-    } catch { /* the reader closed the share sheet */ }
-  }
+  // The result card in the share preview sheet (ResultShare).
+  const shareResult = (number, pattern, streakN) => Menu.preview("Share “Daily Challenge”", resultCard(number, pattern, streakN));
 
   // ---- "Your words" (QuizWordsScreen) -------------------------------------------------
   const TABS = ["All", "Missed", "Learning", "Mastered"];
@@ -1146,7 +1139,7 @@ const Quiz = (() => {
   function wordRow(x, day) {
     const tint = STATUS_COLOR[x.status], tries = x.right + x.wrong;
     const level = Math.min(4, Math.max(0, x.box - 1));
-    const meter = [0, 1, 2, 3].map((i) => `<i style="height:${7 + i * 4}px;background:${i < level ? tint : "rgba(236,232,223,.14)"}"></i>`).join("");
+    const meter = [0, 1, 2, 3].map((i) => `<i style="height:${7 + i * 4}px;background:${i < level ? tint : "rgba(var(--ink-rgb),.14)"}"></i>`).join("");
     const line = x.status === 0 ? `Missed last time  ·  ${dueIn(x.due, day)}` : x.status === 1 ? `Right ${x.right} of ${tries} all time  ·  ${dueIn(x.due, day)}` : `Mastered  ·  right ${x.right} of ${tries} all time`;
     return `<div class="wrow2" data-id="${esc(x.q.id)}"><div class="wrhead"><span class="meter" style="--t:${tint}">${meter}</span>
       <div class="wrmid"><div><span class="ww">${esc(x.q.word)}</span><span class="wt">${pos(x.q.type)}</span></div><div class="wl2">${esc(line)}</div></div>
