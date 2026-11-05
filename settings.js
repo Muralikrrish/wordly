@@ -97,8 +97,15 @@ const Settings = (() => {
     };
     for (const [k, v] of Object.entries(vars)) root.setProperty(k, v);
     document.documentElement.dataset.theme = dark ? "dark" : "light";
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", c.bg);
+    topColor();
     if (typeof PALETTE !== "undefined") PALETTE.splice(0, 10, ...(dark ? DARK_PALETTE : LIGHT_PALETTE).map((x) => [...x]));
+  }
+  // The colour behind the iPhone's status bar (and Safari's top bar): the page's
+  // own top colour — a word's header — else the paper.
+  function topColor() {
+    const v = document.querySelector("#app > .view:last-child");
+    const c = (v && v.dataset.top) || getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", c);
   }
   // A theme change crossfades every colour, like the app's 350 ms Crossfade.
   function retheme() {
@@ -373,5 +380,5 @@ const Settings = (() => {
       onChange: (v) => { s.margin = v; save(); apply(); prev.style.padding = `0 ${v}px`; } });
   }
 
-  return { apply, isDark, reading, paraGap, font, fontOf, FONTS, settingsPage, fontPage, layoutPage, sheet, tileHtml, wireTiles, subBar, wireBack, entrance };
+  return { apply, topColor, isDark, reading, paraGap, font, fontOf, FONTS, settingsPage, fontPage, layoutPage, sheet, tileHtml, wireTiles, subBar, wireBack, entrance };
 })();

@@ -2,7 +2,7 @@
    search index) is stored on the first visit; each definition file is stored
    the first time a word in it is opened, so words already read open offline.
    Bump APP when the page's own files change, so phones pick up the new ones. */
-const APP = "wordly-app-8";
+const APP = "wordly-app-9";
 const DATA = "wordly-data";
 const SHELL = [
   "./", "index.html", "style.css", "home.css", "word.css", "search.css", "lists.css", "quiz.css", "settings.css", "icons.js", "motion.js", "app.js", "word.js", "search.js", "lists.js", "quiz.js", "settings.js", "menu.js", "look.js", "manifest.webmanifest", "icon-512.png",

@@ -340,6 +340,9 @@ const Word = (() => {
     const acc = accentOf(seed);
     const accHex = `rgb(${acc.join(",")})`;
     view.style.cssText += `;--acc:${accHex};--acc-rgb:${acc.join(",")};--acc08:rgba(${acc},.08);--acc16:rgba(${acc},.16);--acc18:rgba(${acc},.18);--acc22:rgba(${acc},.22);--acc30:rgba(${acc},.30)`;
+    // The strip behind the iPhone's clock takes the header's own colour (its
+    // top edge: the soft stop easing into the mid one), so the header reaches the top.
+    view.dataset.top = lerpHex(PALETTE[((seed % 10) + 10) % 10][0], PALETTE[((seed % 10) + 10) % 10][1], 0.3);
     const labelH = wotd ? 24 : 20;
     view.innerHTML = `<div class="wp">
       <header class="wp-head sheen" style="background:${gradient(seed)}"><div class="in">
