@@ -413,28 +413,8 @@ async function collectionsPage() {
   $view.querySelectorAll("[data-r]").forEach((el) => tracker.add(el));
 }
 
-// Look up text picked in another app (the iPhone Share shortcut opens this).
-function lookPage(raw) {
-  const picked = tidy(raw);
-  if (!picked) return go("#/");
-  const { entries, missing } = lookUp(picked);
-  if (!missing && entries.length) return location.replace(`#/word/${entries[0].id}`);
-  const near = [...entries, ...relatedTo(picked.toLowerCase())];
-  const related = near.length > 0;
-  const list = related ? near : Search.closestWords(picked);
-  const seen = new Set();
-  const pills = list.filter((e) => !seen.has(e.id) && seen.add(e.id));
-  const render = () => {
-    const on = onWishlist(picked);
-    $view.innerHTML = topBar("") + `<div class="note fade" style="font:600 22px/1.3 Outfit,sans-serif;color:var(--ink)">
-        “${esc(picked)}” isn't in Wordly yet${pills.length ? (related ? ", but these are:" : ". Did you mean:") : "."}</div>
-      <div class="pills">${pills.map((e) => `<a class="pill" href="#/word/${e.id}">${esc(e.word)}<small>${pos(e.type)}</small></a>`).join("")}</div>
-      <div class="actions"><button class="btn" id="wish">${on ? "On Wishlist ✓" : "Add to Wishlist"}</button>
-        <a class="btn filled" href="#/search/${encodeURIComponent(picked)}">Search Wordly</a></div>`;
-    document.getElementById("wish").onclick = () => { toggleWish(picked); render(); };
-  };
-  render();
-}
+// Look up text picked in another app (look.js, stage 7): the Android popup's card.
+const lookPage = (raw) => Look.page($view, raw);
 
 function notFound() {
   $view.innerHTML = topBar("") + `<div class="empty"><h2>Not found</h2><a class="btn filled" href="#/">Go home</a></div>`;
@@ -532,3 +512,12 @@ route();
 
 // Offline: keep the app and every word already read on this device.
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+// When the words themselves change (data/version.txt is new), the definition
+// files kept on this phone are dropped, so every word is read fresh again.
+fetch("data/version.txt", { cache: "no-cache" }).then((r) => (r.ok ? r.text() : null)).then(async (v) => {
+  v = v && v.trim();
+  if (!v) return;
+  const had = store.get("dataVersion", null);
+  if (had && had !== v && "caches" in window) { await caches.delete("wordly-data"); data.defs.clear(); }
+  store.set("dataVersion", v);
+}).catch(() => {});

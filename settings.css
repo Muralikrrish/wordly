@@ -118,3 +118,40 @@
 .shpb { width: 100%; margin-top: 22px; }
 .shpb .pbtn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .shpb .pbtn:disabled { opacity: .45; }
+
+/* ---- the look-up card (LookupActivity.kt): opened by the iPhone Shortcut ---- */
+.view.lookview { min-height: 100vh; position: relative; }
+.lkscrim { position: fixed; inset: 0; background: rgba(0,0,0,.32); }
+.lkcard { position: fixed; left: 12px; right: 12px; bottom: calc(12px + var(--bottom)); max-width: 616px; margin: 0 auto; border-radius: 24px; overflow: hidden;
+  background: var(--surface); box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+.lkhead { padding: 18px 20px; color: #fff; }
+.lkk { font: 600 11px Outfit, sans-serif; letter-spacing: 1.4px; color: var(--muted); }
+.lkk.w { color: rgba(255,255,255,.78); }
+.lkw { margin-top: 6px; font: 600 28px/33px Outfit, sans-serif; }
+.lkt { font: 400 14px Inter, sans-serif; color: rgba(255,255,255,.85); }
+.lkchips { display: flex; gap: 8px; padding: 14px 20px 0; flex-wrap: wrap; }
+.lkchip { padding: 6px 12px; border-radius: 99px; font: 500 13px Outfit, sans-serif; color: var(--muted); box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), .2); }
+.lkchip.on { color: var(--accent); background: rgba(var(--accent-rgb), .14); box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), .5); }
+.lkmean { max-height: 260px; overflow-y: auto; padding: 14px 20px 0; }
+.lkmean.more { max-height: 440px; }
+.lkprev { font: 400 15.5px/23px Inter, sans-serif; color: var(--ink); }
+.lkprose { padding: 0; }
+.lkmore { margin-top: 6px; padding: 6px 0; font: 600 15px Outfit, sans-serif; color: var(--accent); }
+.lkacts { padding: 18px 12px 14px; }
+.lkrow { display: flex; align-items: center; }
+.lkbtn { padding: 11px 16px; border-radius: 99px; font: 600 15px Outfit, sans-serif; color: var(--accent); text-align: center; }
+.lkbtn.on { background: var(--accent); color: var(--on-accent); white-space: nowrap; }
+.lkback { display: flex; align-items: center; gap: 10px; width: 100%; padding: 4px 20px 16px 18px; color: var(--accent); font: 500 14.5px Outfit, sans-serif; text-align: left; }
+.lkacts .lkback { width: auto; padding: 9px 16px 9px 8px; font-weight: 600; font-size: 15px; }
+.lkback svg { width: 22px; height: 22px; }
+.lknf { padding: 20px 0 8px; }
+.lknf.solo { padding: 20px; }
+.lknf > .lkk, .lknf > .lkq { padding: 0 20px; }
+.lknf.solo > .lkk, .lknf.solo > .lkq { padding: 0; }
+.lkq { margin-top: 8px; font: 600 18px/24px Outfit, sans-serif; color: var(--ink); }
+.lkq.big { font-size: 19px; line-height: 25px; }
+.lkpills { display: flex; flex-wrap: wrap; gap: 8px; max-height: 300px; overflow-y: auto; padding: 14px 20px 8px; }
+.lkpill { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 99px; box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), .35); }
+.lkpill b { font: 600 15px Outfit, sans-serif; color: var(--ink); }
+.lkpill small { font: 400 12.5px Inter, sans-serif; color: var(--accent); }
+.lkpad { padding: 6px 12px 0; }
