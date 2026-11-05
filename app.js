@@ -180,7 +180,10 @@ const tidy = (raw) => raw.replace(/[’‘]/g, "'").replace(/^[^\p{L}\p{N}]+|[^\
 
 // ---- word of the day (same pick as the app) -------------------------------
 function wordOfTheDay() {
-  const pool = data.index.filter((e) => e.f);   // DictionaryDb.featurableIds()
+  // DictionaryDb.featurableIds(); an older cached word list without the flag
+  // falls back to single short words.
+  let pool = data.index.filter((e) => e.f);
+  if (!pool.length) pool = data.index.filter((e) => !e.word.includes(" ") && e.word.length <= 16);
   const now = new Date();
   const day = Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
   const i = (((day * 1103515245 + 12345) % pool.length) + pool.length) % pool.length;
@@ -376,7 +379,7 @@ async function home(view) {
       <span class="logo-disc">${LOGO}</span><br><span class="wm">Wordly</span></div>
     ${searchBox("")}
     <div id="home-body">
-      <a class="wotd2" data-press data-r href="#/word/${entry.id}?c=${seed}">
+      <a class="wotd2" data-press data-r href="#/word/${entry.id}?c=${seed}&w=1">
         <div class="top sheen" style="background:${gradient(seed)}"><h2 class="${titleCls}">${esc(entry.word)}</h2>
           ${entry.preview ? `<p>${esc(entry.preview)}</p>` : ""}</div>
         <div class="bottom"><div class="label">WORD OF THE DAY</div><div class="date">${date}</div></div>
@@ -429,58 +432,11 @@ async function searchPage(q) {
   input.focus();
 }
 
-async function wordPage(id, seed) {
-  const e = data.byId.get(id);
-  if (!e) return notFound();
-  seed ??= randomSeed();
-  addRecent(id);
-  $view.innerHTML = `<div class="word-page"><div class="word-head" style="background:${gradient(seed)}">
-      <h1>${esc(e.word)}</h1><div class="pos">${pos(e.type)}</div></div>
-      <div id="body"><div class="loading">Loading…</div></div></div>
-    <div class="tray">
-      <button class="icon-btn" onclick="history.back()" aria-label="Back">${ICON.back}</button>
-      <button class="icon-btn" id="say" aria-label="Pronounce">${ICON.speak}</button>
-      <button class="icon-btn ${isSaved(id) ? "on" : ""}" id="mark" aria-label="Save">${isSaved(id) ? ICON.markOn : ICON.mark}</button>
-      <button class="icon-btn" id="share" aria-label="Share">${ICON.share}</button>
-    </div>`;
-  scrollTo(0, 0);
-  document.getElementById("say").onclick = () => speak(e.word);
-  document.getElementById("mark").onclick = (ev) => {
-    const on = toggleSaved(id);
-    ev.currentTarget.classList.toggle("on", on);
-    ev.currentTarget.innerHTML = on ? ICON.markOn : ICON.mark;
-  };
-  document.getElementById("share").onclick = () => {
-    const text = `${e.word} (${pos(e.type)}): ${e.preview || ""}`;
-    if (navigator.share) navigator.share({ title: e.word, text, url: location.href }).catch(() => {});
-    else navigator.clipboard?.writeText(text);
-  };
-  let def;
-  try { def = await definition(id); } catch { def = null; }
-  const body = document.getElementById("body");
-  if (!body) return;
-  if (!def) { body.innerHTML = `<div class="empty">Couldn't load this word. Check your connection and try again.</div>`; return; }
-  const [intro, sections] = def;
-  const accent = PALETTE[seed][0];
-  const ex = await extras();
-  const story = ex.stories[id];
-  const mix = ex.mixups.filter((m) => m.items.some(([eid]) => eid === id));
-  body.innerHTML = `<div class="prose fade">${intro}</div>
-    ${story ? `<div class="extra"><div class="lbl">The story behind the word</div><p>${esc(story)}</p></div>` : ""}
-    ${mix.map((m) => `<div class="extra"><div class="lbl">Don't mix it up</div><div class="mix">${m.items.map(([eid, meaning]) => {
-      const o = data.byId.get(eid); return o ? `<a href="#/word/${eid}"><b>${esc(o.word)}</b> <span>${esc(meaning)}</span></a>` : ""; }).join("")}</div>
-      ${m.tip ? `<p style="margin-top:10px;font-size:15px">${esc(m.tip)}</p>` : ""}</div>`).join("")}
-    ${sections.map(([h, b]) => `<details class="sec" style="--sec-accent:${accent}"><summary><span>${esc(h)}</span><i><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></i></summary><div class="prose">${b}</div></details>`).join("")}`;
+// The word page lives in word.js (stage 2).
+function wordPage(id, seed, opts) {
+  return Word.render($view, id, seed, opts);
 }
-function speak(word) {
-  if (!("speechSynthesis" in window)) return;
-  const u = new SpeechSynthesisUtterance(word);
-  u.lang = "en-GB";
-  const v = speechSynthesis.getVoices().find((x) => x.lang === "en-GB");
-  if (v) u.voice = v;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
-}
+const speak = (w) => Word.speak(w);
 
 async function sectionPage(group) {
   const cols = (await collections()).filter((c) => c.group === group);
@@ -610,7 +566,8 @@ async function route() {
 
   // Redirects (no screen of their own).
   if (parts[0] === "random") {
-    const pool = data.index.filter((e) => e.f);
+    let pool = data.index.filter((e) => e.f);
+    if (!pool.length) pool = data.index.filter((e) => !e.word.includes(" ") && e.word.length <= 16);
     return location.replace(`#/word/${pool[Math.floor(Math.random() * pool.length)].id}`);
   }
 
@@ -621,14 +578,15 @@ async function route() {
   // The new screen is built in its own layer; the old one stays on top (fixed
   // where it was) while the two cross over, then leaves.
   const old = $view;
-  if (old) old.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
+  if (old) { old.cleanup && old.cleanup(); old.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id")); }
   tracker && tracker.dispose();
   tracker = new Motion.RevealTracker({ firstDelay: firstRoute ? 0 : 250, returning });
   $view = newView();
   $app.appendChild($view);
 
   switch (parts[0]) {
-    case "word": await wordPage(Number(parts[1]), params.has("c") ? Number(params.get("c")) : undefined); break;
+    case "word": await wordPage(Number(parts[1]), params.has("c") ? Number(params.get("c")) : undefined,
+      { wotd: params.has("w"), returning }); break;
     case "search": await searchPage(parts.slice(1).join("/")); break;
     case "look": lookPage(parts.slice(1).join("/")); break;
     case "section": await sectionPage(parts[1]); break;

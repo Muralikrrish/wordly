@@ -1,0 +1,115 @@
+/* ======================================================================
+   Stage 2 — the word page (DetailScreen.kt, Markdown.kt, GlassTray.kt,
+   Stories.kt, MixUps.kt, Families.kt FamilyStrip).
+   ====================================================================== */
+.wp { position: relative; min-height: 100vh; background: var(--bg); }
+
+/* The coloured header stays at the top and folds as the page scrolls: the
+   label and part-of-speech rows close, the word scales to 72%. */
+.wp-head { position: fixed; top: 0; left: 0; right: 0; z-index: 10; color: #fff; text-align: center;
+  max-width: 640px; margin: 0 auto; will-change: transform, opacity; transform-origin: 50% 50%; }
+.wp-head .in { padding-top: calc(12px + var(--top)); }
+.wp-head .fold { overflow: hidden; }
+.wp-head .fold > div { will-change: transform, opacity; }
+.wp-head .label { height: 20px; font: 600 11px/20px Outfit, sans-serif; letter-spacing: 1.4px; color: rgba(255,255,255,.85); }
+.wp-head .word { display: inline-block; font: 600 34px/40px Outfit, sans-serif; padding: 0 24px; cursor: pointer;
+  will-change: transform; -webkit-user-select: none; user-select: none; }
+.wp-head .pos { height: 30px; padding-top: 3px; font: italic 400 17px Outfit, sans-serif; color: rgba(255,255,255,.9); }
+.wp-head .tail { height: 18px; }
+
+.wp-body { padding-bottom: 0; }
+.wp-body .top-space { height: 18px; }
+
+/* Definition text in the reader's font (Literata 17.5 by default). Paragraph
+   gap = size × 0.4; list items 7 dp apart; headings h1–h6 at the app's sizes. */
+.dprose { padding: 0 16px; font-family: Literata, Georgia, serif; font-size: 17.5px; line-height: normal; color: var(--ink); }
+.dprose p, .dprose ul, .dprose ol, .dprose blockquote, .dprose .table, .dprose hr { margin: 0 0 7px; }
+.dprose > :last-child { margin-bottom: 0; }
+.dprose h1, .dprose h2, .dprose h3, .dprose h4, .dprose h5, .dprose h6 { font-weight: 600; margin: 0 0 7px; line-height: normal; }
+.dprose h1 { font-size: 1.5em; } .dprose h2 { font-size: 1.28em; } .dprose h3 { font-size: 1.13em; }
+.dprose h4 { font-size: 1.04em; } .dprose h5 { font-size: 1em; } .dprose h6 { font-size: .95em; }
+.dprose strong { font-weight: 600; }
+.dprose ul, .dprose ol { padding-left: 18px; }
+.dprose li { margin-bottom: 7px; }
+.dprose li:last-child { margin-bottom: 0; }
+.dprose ul li::marker { font-size: .8em; }
+.dprose blockquote { padding-left: 15px; border-left: 3px solid rgba(236,232,223,.25); }
+.dprose blockquote p { margin-bottom: 4px; }
+.dprose hr { border: 0; height: 1px; background: rgba(236,232,223,.14); }
+.dprose .table { overflow-x: auto; }
+.dprose table { border-collapse: collapse; min-width: 100%; font-size: 0.9em; }
+.dprose th, .dprose td { padding: 9px; border: 1px solid rgba(236,232,223,.14); vertical-align: top; text-align: left; }
+.dprose th { font-weight: 600; }
+.dprose tbody tr:nth-child(odd) td { background: rgba(236,232,223,.04); }
+.dprose code { font-family: inherit; }
+.rv { display: inline-block; white-space: pre-wrap; will-change: transform, opacity; }
+.rv-line { will-change: transform, opacity; }
+
+/* Story, "Don't mix it up", word family (between the opening and the sections). */
+.after { padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }
+.wcard { border-radius: 22px; padding: 16px 18px 18px; background: var(--acc08); border: 1px solid var(--acc22); }
+.wcard .hd { display: flex; align-items: center; gap: 12px; }
+.wcard .disc { width: 36px; height: 36px; border-radius: 50%; background: var(--acc16); display: grid; place-items: center; color: var(--acc); flex: none; }
+.wcard .disc .ico { width: 20px; height: 20px; }
+.wcard .kk { font: 600 11px Outfit, sans-serif; letter-spacing: 1.4px; color: var(--acc); }
+.wcard .story { margin-top: 10px; font: 400 15.5px/22px Outfit, sans-serif; color: var(--ink); }
+.mix .set + .set { margin-top: 12px; padding-top: 4px; border-top: 1px solid var(--acc18); }
+.mix .set { padding-top: 8px; }
+.mix .mrow { display: block; padding: 6px 0; border-radius: 12px; }
+.mix .mrow .top { display: flex; align-items: center; gap: 8px; }
+.mix .mrow b { font: 600 17px Outfit, sans-serif; color: var(--ink); }
+.mix .mrow.cur b { color: var(--acc); }
+.mix .mrow i { font: italic 400 13px Outfit, sans-serif; color: var(--muted); }
+.mix .mrow .go { margin-left: auto; font: 400 20px Outfit, sans-serif; color: var(--acc); }
+.mix .mrow .m { font: 400 15px/21px Outfit, sans-serif; color: rgba(236,232,223,.85); }
+.mix .tip { margin-top: 6px; font: italic 400 14.5px/20px Outfit, sans-serif; color: var(--muted); }
+.fam { padding-bottom: 10px; }
+.fam .root { font: 400 17px Outfit, sans-serif; color: var(--ink); }
+.fam .root b { font-weight: 600; } .fam .root i { color: var(--muted); }
+.fam .blurb { margin-top: 10px; font: 400 14.5px/20px Outfit, sans-serif; color: var(--muted); }
+.fam .sibs { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.fam .sib { padding: 7px 13px; border-radius: 999px; background: var(--bg); border: 1px solid var(--acc30); font: 400 15px Outfit, sans-serif; color: var(--ink); }
+.fam .sib b { color: var(--acc); font-weight: 700; }
+.fam .all { display: inline-block; margin-top: 4px; padding: 10px 0; font: 600 15px Outfit, sans-serif; color: var(--acc); }
+
+/* Section cards: a soft tint of the word's colour; tinted deeper when open. */
+.secs { padding: 0 16px; }
+.sec2 + .sec2 { margin-top: 10px; }
+.sec2 .shd { display: flex; align-items: stretch; gap: 13px; padding: 14px 12px 14px 14px; border-radius: 18px; cursor: pointer;
+  background: rgba(var(--acc-rgb), calc(.08 + .06 * var(--open, 0))); border: 1px solid rgba(var(--acc-rgb), calc(.16 + .18 * var(--open, 0))); }
+.sec2 .abar { width: 4px; border-radius: 2px; flex: none; background: linear-gradient(var(--acc), rgba(var(--acc-rgb), .3)); }
+.sec2 .title { flex: 1; align-self: center; font-family: Literata, Georgia, serif; font-weight: 600; font-size: 16.5px; line-height: 1.28; color: var(--ink); }
+.sec2 .chev { width: 32px; height: 32px; border-radius: 50%; align-self: center; flex: none; display: grid; place-items: center;
+  background: rgba(var(--acc-rgb), calc(.16 + .14 * var(--open, 0))); color: var(--acc); }
+.sec2 .chev svg { width: 22px; height: 22px; transform: rotate(calc(180deg * var(--open, 0))); }
+.sec2 .body { overflow: hidden; height: 0; }
+.sec2 .body .dprose { padding-top: 16px; padding-bottom: 14px; }
+
+/* The quiet close: ── • ── and "Surprise me". */
+.dfoot { padding-top: 44px; text-align: center; }
+.dfoot .orn { display: inline-flex; align-items: center; }
+.dfoot .orn i { width: 36px; height: 1px; background: rgba(var(--acc-rgb), .35); }
+.dfoot .orn b { width: 5px; height: 5px; border-radius: 50%; margin: 0 10px; background: rgba(var(--acc-rgb), .7); }
+.dfoot .holder { position: relative; display: inline-block; margin-top: 24px; }
+.dfoot .ring { position: absolute; inset: 0; border-radius: 999px; border: 2px solid rgba(var(--acc-rgb), .8); opacity: 0; pointer-events: none; }
+.dfoot .pill { display: inline-flex; align-items: center; gap: 10px; padding: 12px 22px; border-radius: 999px; cursor: pointer;
+  background: rgba(var(--acc-rgb), .13); border: 1px solid rgba(var(--acc-rgb), .30); font: 500 17px Outfit, sans-serif; color: var(--ink); }
+.dfoot .pill .ico { width: 20px; height: 20px; color: var(--acc); }
+.wp-clear { height: 140px; }
+
+/* The floating glass tray. */
+.tray2 { position: fixed; left: 50%; bottom: calc(16px + var(--bottom)); z-index: 20; transform: translateX(-50%); }
+.tray2 .glass { display: flex; gap: 4px; padding: 5px 8px; border-radius: 999px;
+  background: rgba(35, 38, 47, .37); -webkit-backdrop-filter: blur(22px) saturate(1.2); backdrop-filter: blur(22px) saturate(1.2);
+  border: 1px solid rgba(255,255,255,.22); box-shadow: 0 10px 28px rgba(0,0,0,.45); }
+.tray2 .slot { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: #fff; cursor: pointer; position: relative; }
+.tray2 .slot svg { display: block; }
+.tray2 .fx { position: absolute; left: -60px; right: -60px; top: -60px; bottom: -60px; pointer-events: none; }
+.tray2 .aa { display: flex; align-items: flex-end; font-family: Outfit, sans-serif; font-weight: 600; }
+.tray2 .aa .A { font-size: 20px; line-height: 20px; transform-origin: 50% 100%; display: inline-block; }
+.tray2 .aa .a { font-size: 15px; line-height: 15px; margin-left: 1px; display: inline-block; }
+.savednote { position: fixed; left: 50%; bottom: calc(96px + var(--bottom)); z-index: 21; transform: translateX(-50%);
+  display: flex; align-items: center; padding: 0 6px 0 20px; border-radius: 999px; background: var(--surface);
+  border: 1px solid rgba(236,232,223,.10); box-shadow: 0 8px 24px rgba(0,0,0,.4); white-space: nowrap; }
+.savednote span { font: 400 15px Outfit, sans-serif; color: var(--ink); margin-right: 6px; }
+.savednote a { font: 600 15px Outfit, sans-serif; color: var(--accent); padding: 13px 12px; }
