@@ -92,8 +92,8 @@ async function loadIndex() {
   }
 }
 async function definition(id) {
-  const n = Math.floor(id / 100);
-  if (!data.defs.has(n)) data.defs.set(n, json(`data/defs/${n}.json`));
+  const n = Math.floor(id / 10);            // ten words to a file (tools/build_web.py CHUNK)
+  if (!data.defs.has(n)) data.defs.set(n, json(`data/w/${n}.json`).catch((err) => { data.defs.delete(n); throw err; }));
   const chunk = await data.defs.get(n);
   return chunk[id];
 }
@@ -510,6 +510,14 @@ history.scrollRestoration = "manual";
 const startLook = new URLSearchParams(location.search).get("look");
 if (startLook) history.replaceState(null, "", location.pathname + "#/look/" + encodeURIComponent(startLook));
 route();
+
+// A finger on a word starts fetching its definition before the tap even
+// lands, so the page usually opens with its text ready.
+addEventListener("pointerdown", (e) => {
+  const a = e.target.closest && e.target.closest('a[href^="#/word/"]');
+  const m = a && a.getAttribute("href").match(/^#\/word\/(\d+)/);
+  if (m && data.index) definition(Number(m[1])).catch(() => {});
+}, { passive: true });
 
 // Offline: keep the app and every word already read on this device.
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});

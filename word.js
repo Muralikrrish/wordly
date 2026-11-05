@@ -336,6 +336,13 @@ const Word = (() => {
     if (!e) return notFound();
     seed = seed ?? randomSeed();
     const animate = !returning;
+    // The app has every definition on the phone, so its page opens all at
+    // once: header, text and tray together. Here the text may still be on its
+    // way, so the page waits for it (up to 1.5 s on a slow connection) before
+    // it starts opening; the old page stays until then.
+    const defP = definition(id).catch(() => null);
+    const exP = extras().catch(() => null);
+    await Promise.race([Promise.all([defP, exP]), new Promise((r) => setTimeout(r, 1500))]);
     addRecent(id);
     const acc = accentOf(seed);
     const accHex = `rgb(${acc.join(",")})`;
@@ -394,13 +401,12 @@ const Word = (() => {
     view.appendChild(t);
     view.cleanup = () => { removeEventListener("scroll", onScroll); t.cleanup(); document.querySelector(".savednote")?.remove(); };
 
-    let def;
-    try { def = await definition(id); } catch { def = null; }
+    const def = await defP;
     const bodyIn = view.querySelector(".body-in");
     if (!bodyIn) return;
     if (!def) { bodyIn.innerHTML = `<div class="empty">Couldn't load this word. Check your connection and try again.</div>`; return; }
     const [intro, sections] = def;
-    const ex = await extras();
+    const ex = (await exP) || { stories: {}, mixups: [], families: [] };
     const story = ex.stories[id];
     const mixes = ex.mixups.filter((m) => m.items.some(([eid]) => eid === id));
     const fams = ex.families.filter((f) => f.items.includes(id));
