@@ -389,75 +389,12 @@ function wordPage(id, seed, opts) {
 }
 const speak = (w) => Word.speak(w);
 
-async function sectionPage(group) {
-  const cols = (await collections()).filter((c) => c.group === group);
-  const [blurb] = SECTIONS[group] || [""];
-  $view.innerHTML = topBar(group) + `<div class="note">${esc(blurb)}</div>
-    <div class="grid fade">${cols.map((c, i) => `<a class="card" style="background:${gradient(i * 3 + 1)}" href="#/collection/${c.id}">
-      <h3>${esc(c.title)}</h3><p>${esc(c.blurb)}</p></a>`).join("")}</div>`;
-}
-
-const SORTS = ["Shuffle", "A–Z", "Z–A"];
-async function collectionPage(id, items, head) {
-  let c = head;
-  if (!c) {
-    c = (await collections()).find((x) => x.id === id);
-    if (!c) return notFound();
-  }
-  const list = (items || c.items).map((i) => data.byId.get(i)).filter(Boolean);
-  const seed = COLOR[c.id] ?? (c.id.length * 7) % 10;
-  let sort = "Shuffle";
-  const render = () => {
-    const shown = sort === "Shuffle" ? [...list].sort(() => Math.random() - 0.5)
-      : [...list].sort((a, b) => a.norm.localeCompare(b.norm)) [sort === "Z–A" ? "reverse" : "slice"]();
-    document.getElementById("list").innerHTML = shown.map(row).join("");
-    document.querySelectorAll(".chip").forEach((ch) => ch.classList.toggle("on", ch.dataset.s === sort));
-  };
-  $view.innerHTML = topBar("") + `<div class="col-head fade" style="background:${gradient(seed)}">
-      <div class="grp">${esc(c.group || "")}</div><h2>${esc(c.title)}</h2><p>${esc(c.blurb || "")}</p></div>
-    <div class="chips">${SORTS.map((s) => `<button class="chip" data-s="${s}">${s === "Shuffle" ? "⚄ " : ""}${s}</button>`).join("")}</div>
-    <div class="rows" id="list"></div>`;
-  document.querySelectorAll(".chip").forEach((ch) => (ch.onclick = () => { sort = ch.dataset.s; render(); }));
-  render();
-}
-
-async function familiesPage() {
-  const { families } = await extras();
-  const themes = [...new Set(families.map((f) => f.theme))];
-  $view.innerHTML = topBar("Word families") + `<div class="note">Learn one Greek or Latin root and you can work out a whole family of words.</div>` +
-    themes.map((t) => `<div class="group-label">${esc(t)}</div><div class="grid">${families.filter((f) => f.theme === t)
-      .map((f, i) => `<a class="card" style="background:${gradient(i * 3 + 2)}" href="#/family/${f.id}">
-        <h3>${esc(f.root.split("·")[0].trim())}</h3><p>${esc(f.meaning)}</p></a>`).join("")}</div>`).join("");
-}
-async function familyPage(id) {
-  const f = (await extras()).families.find((x) => x.id === id);
-  if (!f) return notFound();
-  collectionPage(null, f.items, { id: "fam_" + f.id, title: f.root, blurb: `${f.meaning} · ${f.origin}. ${f.blurb || ""}`, group: "Word family" });
-}
-
-function listsPage(tab) {
-  const tabs = [["saved", "Saved words"], ["recent", "Recent"], ["wishlist", "Wishlist"]];
-  let body;
-  if (tab === "wishlist") {
-    const w = wishlist();
-    body = w.length ? `<div class="actions"><span class="note" style="padding:0">Words you'd like Wordly to have.</span>
-        <button class="btn" id="copy">Copy all</button></div>
-      <div class="rows">${w.map((r) => `<div class="row" style="display:flex;align-items:center"><span class="w" style="flex:1">${esc(r.word)}</span>
-        <button class="btn" data-w="${esc(r.word)}" aria-label="Remove">✕</button></div>`).join("")}</div>`
-      : `<div class="empty"><h2>Your Wishlist is empty</h2>Look up a word Wordly doesn't have yet, and tap “Add to Wishlist”.</div>`;
-  } else {
-    const rows = (tab === "recent" ? recent() : saved()).map((r) => data.byId.get(r.id)).filter(Boolean);
-    body = rows.length ? `<div class="rows">${rows.map(row).join("")}</div>`
-      : `<div class="empty"><h2>${tab === "recent" ? "Nothing yet" : "No saved words yet"}</h2>${tab === "recent" ? "Words you open show up here." : "Tap the bookmark on any word to keep it here."}</div>`;
-  }
-  $view.innerHTML = topBar("My lists") + `<div class="chips">${tabs.map(([k, label]) =>
-    `<a class="chip ${k === tab ? "on" : ""}" href="#/lists/${k}">${label}</a>`).join("")}</div>${body}`;
-  document.getElementById("copy")?.addEventListener("click", () => {
-    navigator.clipboard?.writeText(wishlist().map((r) => r.word).join("\n"));
-    document.getElementById("copy").textContent = "Copied ✓";
-  });
-  document.querySelectorAll("[data-w]").forEach((b) => (b.onclick = () => { toggleWish(b.dataset.w); listsPage("wishlist"); }));
-}
+// Collections, word families and My lists live in lists.js (stage 4).
+const sectionPage = (group) => Lists.sectionPage($view, group);
+const collectionPage = (id, opts) => Lists.collectionPage($view, id, opts);
+const familiesPage = () => Lists.familiesPage($view);
+const familyPage = (id, opts) => Lists.familyPage($view, id, opts);
+const listsPage = (tab) => Lists.listsPage($view, tab);
 
 // Look up text picked in another app (the iPhone Share shortcut opens this).
 function lookPage(raw) {
@@ -541,9 +478,9 @@ async function route() {
     case "search": await searchPage(parts.slice(1).join("/")); break;
     case "look": lookPage(parts.slice(1).join("/")); break;
     case "section": await sectionPage(parts[1]); break;
-    case "collection": await collectionPage(parts[1]); break;
+    case "collection": await collectionPage(parts[1], { returning }); break;
     case "families": await familiesPage(); break;
-    case "family": await familyPage(parts[1]); break;
+    case "family": await familyPage(parts[1], { returning }); break;
     case "lists": listsPage(parts[1] || "saved"); break;
     default: await home($view);
   }

@@ -42,7 +42,9 @@
 .dprose th { font-weight: 600; }
 .dprose tbody tr:nth-child(odd) td { background: rgba(236,232,223,.04); }
 .dprose code { font-family: inherit; }
-.rv { display: inline-block; white-space: pre-wrap; will-change: transform, opacity; }
+/* A word in the line reveal: moves as a box, but lays out like plain text
+   (spaces sit outside it); no forced layer, so text renders the same at rest. */
+.rv { display: inline-block; }
 .rv-line { will-change: transform, opacity; }
 
 /* Story, "Don't mix it up", word family (between the opening and the sections). */

@@ -222,6 +222,12 @@ const Motion = (() => {
   // `kind`: "toWord" (fade 220 in / 200 out), "fromWord" (home scales up from
   // 0.98 while the word shrinks to 0.92, fades and slides down), else fade 220/180.
   function transition(oldNode, newNode, kind) {
+    // Safety net: whatever happens to the frames (a throttled or hidden page),
+    // the old screen is gone and the new one fully shown shortly after.
+    setTimeout(() => {
+      if (oldNode && oldNode.isConnected) oldNode.remove();
+      newNode.style.opacity = ""; newNode.style.transform = "";
+    }, 600);
     if (oldNode) {
       const y = scrollY;
       oldNode.style.position = "fixed";

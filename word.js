@@ -26,7 +26,9 @@ const Word = (() => {
     return { opacity: t, transform: `translate3d(0, ${((1 - overshoot(t)) * LINE.rise).toFixed(2)}px, 0)` };
   });
   function revealLines(root, startDelay = 0) {
-    const original = root.innerHTML;
+    // Each word goes in its own box so it can move, but the spaces stay
+    // OUTSIDE the boxes: the text wraps exactly as plain text would, so the
+    // page looks the same during and after the reveal (the boxes stay).
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode: (n) => (n.parentElement.closest("table") || !n.nodeValue.trim() ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
     });
@@ -34,7 +36,9 @@ const Word = (() => {
     while (walker.nextNode()) texts.push(walker.currentNode);
     for (const t of texts) {
       const frag = document.createDocumentFragment();
-      for (const tok of t.nodeValue.match(/\s*\S+\s*/g) || []) {
+      for (const tok of t.nodeValue.split(/(\s+)/)) {
+        if (!tok) continue;
+        if (/^\s+$/.test(tok)) { frag.appendChild(document.createTextNode(tok)); continue; }
         const s = document.createElement("span");
         s.className = "rv";
         s.textContent = tok;
@@ -42,16 +46,18 @@ const Word = (() => {
       }
       t.replaceWith(frag);
     }
-    // Group the pieces into visual lines (by where they sit on screen).
+    // Group the pieces into the lines the reader sees. As in the app (where a
+    // paragraph gap is itself an empty line of the text), moving on to a new
+    // block — paragraph, heading, list, quote — adds one extra beat.
     const units = [...root.querySelectorAll(".rv, tr")];
+    const blockOf = (u) => { let n = u; while (n.parentElement && n.parentElement !== root) n = n.parentElement; return n; };
     let line = -1, lastTop = null, lastBlock = null;
     const lineOf = [];
     for (const u of units) {
       const top = Math.round(u.getBoundingClientRect().top);
-      const block = u.closest("p, li, h1, h2, h3, h4, h5, h6, blockquote, tr, td, th");
-      if (u.tagName === "TR" || lastTop === null || Math.abs(top - lastTop) > 3 || block !== lastBlock && Math.abs(top - lastTop) > 1) {
-        line += 1;
-      }
+      const block = blockOf(u);
+      if (lastBlock !== null && block !== lastBlock) line += 1;          // the gap line
+      if (u.tagName === "TR" || lastTop === null || Math.abs(top - lastTop) > 3 || block !== lastBlock) line += 1;
       lastTop = top; lastBlock = block;
       lineOf.push(line);
     }
@@ -59,11 +65,7 @@ const Word = (() => {
     units.forEach((u, i) => {
       u.animate(KEYS, { duration: LINE.duration, delay: startDelay + Math.min(lineOf[i] * LINE.stagger, LINE.maxStart), fill: "backwards" });
     });
-    const lastStart = startDelay + Math.min(Math.max(0, lines - 1) * LINE.stagger, LINE.maxStart);
-    // Once it has all settled, put the plain text back (so it reflows and
-    // selects like normal text).
-    setTimeout(() => { if (root.isConnected) root.innerHTML = original; }, lastStart + LINE.duration + 120);
-    return lastStart;
+    return startDelay + Math.min(Math.max(0, lines - 1) * LINE.stagger, LINE.maxStart);
   }
   // One element rising like a line of text (cards that follow the text).
   function riseAt(el, delay) {
@@ -238,6 +240,12 @@ const Word = (() => {
           else navigator.clipboard?.writeText(text + "\n" + location.href);
         }, 200);
       } else if (k === "mark") {
+        // A word already kept (Saved or any list) opens the "My lists" sheet;
+        // otherwise the tap saves it, with the gold pop and the saved note.
+        if (Lists.keptAnywhere(entry.id)) {
+          Lists.saveSheet(entry, () => refreshMark());
+          return;
+        }
         const on = toggleSaved(entry.id);
         // Crossfade to the filled gold mark (200 ms) with a springy pop.
         mk.animate([{ opacity: 0.3 }, { opacity: 1 }], { duration: 200 });
@@ -247,21 +255,35 @@ const Word = (() => {
         if (on) {
           new Spring(0.55, { damping: 0.36, stiffness: 520, onUpdate: (v) => { mk.style.transform = `scale(${v.toFixed(4)})`; } }).to(1);
           addFx(b, 820, ease.linearOutSlowIn, burst);
-          savedNote();
+          savedNote(entry);
         }
       }
     });
+    function refreshMark() {
+      const on = Lists.keptAnywhere(entry.id);
+      mk.innerHTML = on ? ICONS.ic_bookmark_filled : ICONS.ic_bookmark_outline;
+      mk.querySelector("svg").style.cssText = "width:24px;height:24px";
+      mk.style.color = on ? GOLD : "#fff";
+    }
+    el.refreshMark = refreshMark;
     el.cleanup = () => stopEq();
+    refreshMark();
     return el;
   }
 
   // "Saved · Add to list · View" above the tray for 4 s.
   let noteTimer = null;
-  function savedNote() {
+  function savedNote(entry) {
     document.querySelector(".savednote")?.remove();
     const n = document.createElement("div");
     n.className = "savednote";
     n.innerHTML = `<span>Saved</span><a href="#/lists/saved" data-add>Add to list</a><a href="#/lists/saved">View</a>`;
+    n.querySelector("[data-add]").addEventListener("click", (e) => {
+      e.preventDefault();
+      n.remove();
+      const t = document.querySelector(".tray2");
+      Lists.saveSheet(entry, () => t && t.refreshMark && t.refreshMark());
+    });
     document.body.appendChild(n);
     n.animate([{ opacity: 0, transform: "translateX(-50%) translateY(50%)" }, { opacity: 1, transform: "translateX(-50%) translateY(0)" }],
       { duration: 300, easing: "cubic-bezier(.4,0,.2,1)" });
