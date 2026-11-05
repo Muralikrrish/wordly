@@ -1,0 +1,51 @@
+/* ======================================================================
+   Stage 3 — search (SearchScreen.kt): the bar, recent chips, results,
+   "Did you mean", the empty state.
+   ====================================================================== */
+.s3 { position: sticky; top: 0; z-index: 6; background: var(--bg); padding: 6px 20px; }
+.s3 .sbar { display: flex; align-items: center; height: 56px; padding: 0 4px; border-radius: 28px; background: var(--container);
+  box-shadow: 0 2px 4px rgba(0,0,0,.28), 0 1px 2px rgba(0,0,0,.2); }
+.s3 input { flex: 1; min-width: 0; height: 100%; background: none; border: 0; outline: 0; color: var(--ink);
+  font: 400 17px Outfit, sans-serif; caret-color: var(--accent); -webkit-appearance: none; appearance: none; }
+.s3 input::placeholder { color: var(--muted); font: 400 17px Outfit, sans-serif; }
+.s3 input::-webkit-search-cancel-button { display: none; }
+.s3 .lead { width: 48px; height: 48px; position: relative; display: grid; place-items: center; color: var(--muted); flex: none; }
+.s3 .lead .halo { position: absolute; inset: 4px; border-radius: 50%; background: var(--ink); opacity: 0; }
+.s3 .lead .lens, .s3 .lead .back { position: absolute; width: 24px; height: 24px; left: 12px; top: 12px; }
+.s3 .lead svg { width: 24px; height: 24px; display: block; }
+.s3 .lead .back { color: var(--ink); }
+.s3 .clr { width: 48px; height: 48px; display: grid; place-items: center; color: var(--muted); flex: none; }
+.s3 .clr svg { width: 24px; height: 24px; }
+
+.chips-wrap { overflow: hidden; }
+.chips-in { padding: 8px 20px 6px; }
+.rhead { display: flex; align-items: center; margin-bottom: 8px; }
+.rhead span:first-child { flex: 1; font: 600 12px Outfit, sans-serif; letter-spacing: 1.2px; color: var(--accent); }
+.seeall { display: inline-flex; align-items: center; padding: 4px 6px 4px 12px; border-radius: 999px; background: rgba(147,194,216,.12);
+  font: 600 13px Outfit, sans-serif; color: var(--accent); }
+.seeall .chev { width: 18px; height: 18px; display: inline-block; }
+.seeall .chev svg { width: 18px; height: 18px; display: block; }
+.chipflow { display: flex; flex-wrap: wrap; gap: 8px; }
+.rchip { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px 9px 12px; border-radius: 999px; background: var(--container);
+  border: 1px solid rgba(236,232,223,.06); font: 400 15px Outfit, sans-serif; color: var(--ink); white-space: nowrap; }
+.rchip .clock { width: 15px; height: 15px; color: var(--muted); display: inline-block; }
+.rchip .clock svg { width: 15px; height: 15px; display: block; }
+
+.rrow { padding: 0 10px; }
+.rlink { display: block; padding: 0 12px; border-radius: 14px; }
+.rlink:active { background: rgba(236,232,223,.06); }
+.rdiv { height: 1px; margin: 0 12px; background: rgba(236,232,223,.14); }
+.wrow .dim { color: rgba(236,232,223,.80); }
+.wrow .dim b { color: var(--ink); font-weight: 600; }
+.dym { padding: 22px 24px 6px; }
+.dym .nx { font: 400 15px Outfit, sans-serif; color: var(--muted); }
+.dym .k { margin-top: 20px; font: 600 12px Outfit, sans-serif; letter-spacing: 1.2px; color: var(--accent); }
+
+.empty2 { padding: 0 36px; text-align: center; }
+.empty2 .disc { width: 96px; height: 96px; border-radius: 50%; background: rgba(147,194,216,.12); border: 1px solid rgba(147,194,216,.20);
+  display: inline-grid; place-items: center; color: var(--accent); }
+.empty2 .float { width: 40px; height: 40px; display: block; animation: float2 2.6s cubic-bezier(.4,0,.2,1) infinite alternate; }
+.empty2 .float svg { width: 40px; height: 40px; display: block; }
+@keyframes float2 { from { transform: translateY(-3px); } to { transform: translateY(3px); } }
+.empty2 .t { margin-top: 22px; font: 600 21px Outfit, sans-serif; color: var(--ink); }
+.empty2 .m { margin-top: 8px; font: 400 16px/23px Outfit, sans-serif; color: var(--muted); }

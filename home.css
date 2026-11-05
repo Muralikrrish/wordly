@@ -42,7 +42,11 @@
 /* ---- home ---- */
 .home-menu { padding: calc(4px + var(--top)) 0 0 6px; }
 .home-menu .icon-btn { width: 48px; height: 48px; color: var(--ink); }
-.hero { position: relative; margin-top: -26px; padding: 0; text-align: center; overflow: hidden; }
+/* The logo is pulled up 26 dp so its top lines up with the menu button (the
+   app's "shave"); the pull lives INSIDE the hero, so folding the hero takes it
+   along and the search bar lands right under the menu row. */
+.hero { position: relative; display: flow-root; padding: 0; text-align: center; }
+.hero-in { margin-top: -26px; }
 .hero .logo-disc { width: 96px; height: 96px; border-radius: 50%; background: var(--container); display: inline-grid; place-items: center; }
 .hero .logo-disc svg { width: 68px; height: 68px; }
 .hero .wm { font-size: 36px; line-height: 1.2; margin: 12px 0 12px; }

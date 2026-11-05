@@ -104,33 +104,6 @@ function search(q, limit = 60) {
   }
   return [...starts, ...contains].slice(0, limit);
 }
-// "Did you mean": the headwords fewest letter-edits away (single words only).
-function closest(q, max = 5) {
-  q = q.trim().toLowerCase();
-  const cap = q.length <= 4 ? 1 : q.length <= 8 ? 2 : 3;
-  const found = [];
-  for (const e of data.index) {
-    if (Math.abs(e.norm.length - q.length) > cap || e.norm.includes(" ")) continue;
-    const d = editDistance(q, e.norm, cap);
-    if (d <= cap) found.push([d, e]);
-  }
-  return found.sort((a, b) => a[0] - b[0]).slice(0, max).map((x) => x[1]);
-}
-function editDistance(a, b, cap) {
-  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
-  for (let i = 1; i <= a.length; i++) {
-    const cur = [i];
-    let best = i;
-    for (let j = 1; j <= b.length; j++) {
-      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-      best = Math.min(best, cur[j]);
-    }
-    if (best > cap) return cap + 1;
-    prev = cur;
-  }
-  return prev[b.length];
-}
-
 // ---- looking up a picked word (same rules as the Android card) ----------
 // Plain forms of a word, each flagged when it's only an inflection (same word).
 function baseForms(w) {
@@ -360,7 +333,7 @@ function challengeBanner() {
   </a>`;
 }
 
-async function home(view) {
+async function home(view, opts = {}) {
   const { entry, seed } = wordOfTheDay();
   const cols = await collections();
   const open = cols.filter((c) => c.group === OPEN_SECTION);
@@ -375,9 +348,9 @@ async function home(view) {
   }
   view.innerHTML = `
     <div class="home-menu"><button class="icon-btn" aria-label="Menu" id="menu">${ICON.menu}</button></div>
-    <div class="hero" id="hero">${bgIcons()}
-      <span class="logo-disc">${LOGO}</span><br><span class="wm">Wordly</span></div>
-    ${searchBox("")}
+    <div class="hero" id="hero">${bgIcons()}<div class="hero-in">
+      <span class="logo-disc">${LOGO}</span><br><span class="wm">Wordly</span></div></div>
+    ${Search.box("")}
     <div id="home-body">
       <a class="wotd2" data-press data-r href="#/word/${entry.id}?c=${seed}&w=1">
         <div class="top sheen" style="background:${gradient(seed)}"><h2 class="${titleCls}">${esc(entry.word)}</h2>
@@ -401,35 +374,13 @@ async function home(view) {
   view.querySelectorAll(".wm").forEach(Motion.syncFlow);
   view.querySelectorAll("[data-r]").forEach((el) => tracker.add(el));
   view.querySelector("#menu").onclick = () => go("#/lists/saved");
-  wireSearch(view);
+  Search.attach(view, { hero: view.querySelector("#hero"), body: view.querySelector("#home-body"), ...opts });
 }
 
-function searchBox(q) {
-  return `<div class="search"><label>${ICON.search}<input id="q" type="search" enterkeyhint="search" autocomplete="off"
-    autocapitalize="off" spellcheck="false" placeholder="Search" value="${esc(q)}"></label></div><div id="results"></div>`;
-}
-function wireSearch() {
-  const input = document.getElementById("q");
-  const out = document.getElementById("results");
-  const show = () => {
-    const q = input.value;
-    history.replaceState(null, "", q.trim() ? "#/search/" + encodeURIComponent(q) : "#/");
-    if (!q.trim()) { out.innerHTML = ""; document.querySelectorAll(".home-only").forEach((n) => (n.hidden = false)); return; }
-    const found = search(q);
-    if (found.length) { out.innerHTML = `<div class="rows">${found.map(row).join("")}</div>`; return; }
-    const near = closest(q);
-    out.innerHTML = `<div class="note">No exact match for “${esc(q)}”.</div>` +
-      (near.length ? `<div class="kicker">Did you mean</div><div class="rows">${near.map(row).join("")}</div>` : "");
-  };
-  input.addEventListener("input", show);
-  input.addEventListener("keydown", (e) => { if (e.key === "Enter") input.blur(); });
-  return { input, show };
-}
-async function searchPage(q) {
-  $view.innerHTML = searchBox(q);
-  const { input, show } = wireSearch();
-  show();
-  input.focus();
+// Search lives on the home screen (search.js, stage 3); a search link opens
+// home with the search filled in.
+function searchPage(q) {
+  return home($view, { query: q, focus: false });
 }
 
 // The word page lives in word.js (stage 2).
@@ -516,7 +467,7 @@ function lookPage(raw) {
   if (!missing && entries.length) return location.replace(`#/word/${entries[0].id}`);
   const near = [...entries, ...relatedTo(picked.toLowerCase())];
   const related = near.length > 0;
-  const list = related ? near : closest(picked);
+  const list = related ? near : Search.closestWords(picked);
   const seen = new Set();
   const pills = list.filter((e) => !seen.has(e.id) && seen.add(e.id));
   const render = () => {
@@ -578,7 +529,7 @@ async function route() {
   // The new screen is built in its own layer; the old one stays on top (fixed
   // where it was) while the two cross over, then leaves.
   const old = $view;
-  if (old) { old.cleanup && old.cleanup(); old.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id")); }
+  if (old) { old.cleanup && old.cleanup(); old.cleanupSearch && old.cleanupSearch(); old.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id")); }
   tracker && tracker.dispose();
   tracker = new Motion.RevealTracker({ firstDelay: firstRoute ? 0 : 250, returning });
   $view = newView();
