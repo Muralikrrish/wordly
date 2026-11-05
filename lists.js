@@ -210,11 +210,11 @@ const Lists = (() => {
 
   // ---- prompts (ExitPrompt.kt ConfirmPrompt, WordLists.kt name card) ---------
   // A card that springs up (0.72, 320) over the dimmed, softly blurred page.
-  function prompt({ icon: ic, title, message, field = null, initial = "", stay, goLabel, danger = false, onGo }) {
+  function prompt({ icon: ic, mark = false, title, message, field = null, initial = "", stay, goLabel, danger = false, onGo }) {
     const o = document.createElement("div");
     o.className = "pover";
     o.innerHTML = `<div class="pcard" role="dialog" aria-label="${esc(title)}">
-      ${ic ? `<span class="pdisc">${ic}</span>` : ""}<div class="pt">${esc(title)}</div><div class="pm">${esc(message)}</div>
+      ${mark ? `<span class="pmark"><span class="pmd">${LOGO}</span></span>` : ic ? `<span class="pdisc">${ic}</span>` : ""}<div class="pt">${esc(title)}</div><div class="pm">${esc(message)}</div>
       ${field ? `<input class="pfield" maxlength="${LIST_NAME_MAX + 5}" placeholder="e.g. Words for my essay" value="${esc(initial)}" autocapitalize="sentences" enterkeyhint="done"><div class="perr"></div>` : ""}
       <div class="pbtns"><button class="pbtn" data-press="0.94" data-a="stay">${esc(stay)}</button><button class="pbtn on ${danger ? "danger" : ""}" data-press="0.94" data-a="go">${esc(goLabel)}</button></div></div>`;
     document.body.appendChild(o);

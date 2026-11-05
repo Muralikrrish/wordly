@@ -4,6 +4,7 @@
      #/word/<id>            a word          #/look/<text>    look up picked text
      #/section/<group>      a section       #/collection/<id>
      #/families, #/family/<id>              #/lists/<tab>    Saved / Recent / Wishlist
+     #/quiz  (Word Challenge)  #/quiz/play  (a round)  #/quiz/words  (Your words)
    Data comes from data/ (built by tools/build_web.py); definitions load in
    small files only when a word is opened. Saved words etc. stay on this device. */
 "use strict";
@@ -18,10 +19,14 @@ const PALETTE = [
   ["#9C6A3D", "#77502E", "#503620"], ["#857240", "#665830", "#463D22"],
   ["#66703F", "#4E5631", "#363C22"], ["#457259", "#355744", "#243C30"],
 ];
-const gradient = (i) => {
+// Palette.shading: soft → mid (38–78%) → a stop 55% of the way from mid to deep.
+const lerpHex = (a, b, t) => "#" + [1, 3, 5].map((k) => Math.round(parseInt(a.slice(k, k + 2), 16) * (1 - t)
+  + parseInt(b.slice(k, k + 2), 16) * t).toString(16).padStart(2, "0")).join("");
+const shading = (i) => {
   const [soft, mid, deep] = PALETTE[((i % 10) + 10) % 10];
-  return `linear-gradient(135deg, ${soft} 0%, ${mid} 38%, ${mid} 78%, ${deep} 100%)`;
+  return [[0, soft], [0.38, mid], [0.78, mid], [1, lerpHex(mid, deep, 0.55)]];
 };
+const gradient = (i) => `linear-gradient(135deg, ${shading(i).map(([s, c]) => `${c} ${s * 100}%`).join(", ")})`;
 const randomSeed = () => Math.floor(Math.random() * 10);
 const POS = { n: "noun", v: "verb", adj: "adjective", adv: "adverb", prep: "preposition",
   conj: "conjunction", intj: "interjection", idm: "idiom", phr: "phrasal verb",
@@ -317,21 +322,7 @@ function sectionCard(title, blurb, seed, iconName, href) {
     <h3>${esc(title)}</h3><p>${esc(blurb)}</p><span class="badge2">${icon(iconName)}</span></a>`;
 }
 
-function challengeBanner() {
-  const day = epochDay();
-  const seed = challengeSeed(day);
-  const mid = PALETTE[seed][1];
-  const date = new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
-  return `<a class="banner sheen" data-press="0.98" href="#/quiz" style="background:${gradient(seed)}">
-    <div class="top"><span class="bolt"><svg viewBox="0 0 24 24" fill="#fff"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z"/></svg></span>
-      <span class="kick">DAILY CHALLENGE</span><span class="day">${esc(date)}</span></div>
-    <h3>Name the word</h3>
-    <div class="sub">Read the meaning, type the word. Fewer hints, more points.</div>
-    <div class="pips">${"<i></i>".repeat(10)}</div>
-    <div class="row"><span class="cardpill" style="color:${mid}"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Play now</span>
-      <span class="open">Open<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
-  </a>`;
-}
+// The Daily Challenge banner lives in quiz.js (stage 5).
 
 async function home(view, opts = {}) {
   const { entry, seed } = wordOfTheDay();
@@ -366,7 +357,7 @@ async function home(view, opts = {}) {
       ${groups.map((g, i) => { const [blurb, s, ic] = SECTION[g] || ["Word collections", i, "ic_collections"];
         return `<div data-r>${sectionCard(g, blurb, s, ic, `#/section/${encodeURIComponent(g)}`)}</div>`; }).join("")}
       <div class="home-head" data-r><span class="wm semi">Vocabulary quiz</span></div>
-      <div data-r>${challengeBanner()}</div>
+      <div data-r>${Quiz.banner()}</div>
       ${recents.length ? `<div class="home-head" data-r style="padding-bottom:2px"><span class="wm semi">Recent searches</span></div>
         <div class="hrows">${recents.map((e) => `<div class="hrow-wrap" data-r><a class="hrow" href="#/word/${e.id}">${wordRow(e)}</a></div>`).join("")}</div>` : ""}
       <div class="home-bottom"></div>
@@ -374,6 +365,7 @@ async function home(view, opts = {}) {
   view.querySelectorAll(".wm").forEach(Motion.syncFlow);
   view.querySelectorAll("[data-r]").forEach((el) => tracker.add(el));
   view.querySelector("#menu").onclick = () => go("#/lists/saved");
+  Quiz.wireBanner(view);
   Search.attach(view, { hero: view.querySelector("#hero"), body: view.querySelector("#home-body"), ...opts });
 }
 
@@ -482,6 +474,8 @@ async function route() {
     case "families": await familiesPage(); break;
     case "family": await familyPage(parts[1], { returning }); break;
     case "lists": listsPage(parts[1] || "saved"); break;
+    case "quiz": await (parts[1] === "play" ? Quiz.playPage($view, { returning })
+      : parts[1] === "words" ? Quiz.wordsPage($view, params.get("tab")) : Quiz.hubPage($view)); break;
     default: await home($view);
   }
 
