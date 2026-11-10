@@ -106,6 +106,7 @@ const Settings = (() => {
     const v = document.querySelector("#app > .view:last-child");
     const c = (v && v.dataset.top) || getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", c);
+    document.documentElement.style.setProperty("--strip", c);
   }
   // A theme change crossfades every colour, like the app's 350 ms Crossfade.
   function retheme() {

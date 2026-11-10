@@ -82,8 +82,11 @@
 .home-head .wm { font-size: 22px; line-height: 1.25; }
 
 .cgrid { padding: 0 20px; }
-.crow { display: flex; gap: 12px; margin-bottom: 12px; align-items: stretch; }
-.crow > * { flex: 1 1 0; min-width: 0; }
+/* Two cards a row, always the same height (the app's IntrinsicSize rows): a
+   grid, because Safari won't stretch a flex row's cards to match. */
+.crow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin-bottom: 12px; align-items: stretch; }
+.crow > * { min-width: 0; }
+.crow > :only-child { grid-column: 1 / -1; }   /* a lone last card fills the row (Families.kt weight 1) */
 .ccard { border-radius: 20px; color: #fff; display: flex; flex-direction: column; padding: 14px 14px 12px;
   box-shadow: 0 2px 5px rgba(0,0,0,.3); }
 .ccard h3 { font: 600 18px/22px Outfit, sans-serif; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

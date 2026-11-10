@@ -44,6 +44,11 @@ body { font-family: Inter, system-ui, sans-serif; font-size: 16px; line-height: 
      0.5 sp: every piece of the app's text that doesn't set its own has it. */
   letter-spacing: .5px; }
 button, input, textarea { letter-spacing: inherit; }
+/* The strip behind the iPhone's clock and battery: solid, in the page's top
+   colour, so nothing scrolls under the status bar (the app stops its pages
+   below it; iOS would otherwise blur whatever passes underneath). */
+body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: var(--top); z-index: 50;
+  background: var(--strip, var(--bg)); pointer-events: none; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 a { color: inherit; text-decoration: none; }
 #app { max-width: 640px; margin: 0 auto; min-height: 100vh; padding-bottom: calc(32px + var(--bottom)); }
