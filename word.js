@@ -6,7 +6,10 @@
 const Word = (() => {
   const { Spring, tween, ease, onFrame } = Motion;
   const overshoot = ease.overshoot(1.0);
-  const LINE = { stagger: 70, duration: 560, maxStart: 1200, rise: 14 };
+  // The first screen's lines all start within maxStart, at ONE even pace: up
+  // to `stagger` apart, closer when the screen holds more lines (a long entry
+  // never bunches up at the bottom). Same rule as the app (Markdown.kt).
+  const LINE = { stagger: 70, duration: 560, maxStart: 1500, rise: 14 };
 
   // ---- colours -------------------------------------------------------------
   const rgbOf = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
@@ -66,8 +69,15 @@ const Word = (() => {
     // Further down than this: off screen until long after the cascade ends.
     // Measured from the top of the text, not the screen — while the page
     // slides in (e.g. from the home cards) it can still be off screen itself.
-    const below = root.getBoundingClientRect().top + innerHeight + 240;
-    const delayOf = (i) => startDelay + Math.min(lineOf[i] * LINE.stagger, LINE.maxStart);
+    const rootTop = root.getBoundingClientRect().top;
+    const below = rootTop + innerHeight + 240;
+    // How many lines fit on the first screen (where the text starts, kept
+    // sensible while a page slides in) → one even beat for all of them.
+    const room = innerHeight - Math.min(Math.max(rootTop, 0), innerHeight / 2);
+    let onScreen = 0;
+    units.forEach((u, i) => { if (tops[i] - rootTop < room) onScreen = Math.max(onScreen, lineOf[i] + 1); });
+    const beat = onScreen > 1 ? Math.min(LINE.stagger, LINE.maxStart / (onScreen - 1)) : LINE.stagger;
+    const delayOf = (i) => startDelay + Math.min(lineOf[i] * beat, LINE.maxStart);
     units.forEach((u, i) => {
       if (tops[i] > below) return;
       u.animate(KEYS, { duration: LINE.duration, delay: delayOf(i), fill: "backwards" });
@@ -85,7 +95,7 @@ const Word = (() => {
       el.classList.add("rvh");
       setTimeout(() => el.classList.remove("rvh"), delayOf(i) + 60);
     }
-    return startDelay + Math.min(Math.max(0, lines - 1) * LINE.stagger, LINE.maxStart);
+    return startDelay + Math.min(Math.max(0, lines - 1) * beat, LINE.maxStart);
   }
   // One element rising like a line of text (cards that follow the text).
   function riseAt(el, delay) {
