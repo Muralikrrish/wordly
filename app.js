@@ -188,7 +188,17 @@ function lookUp(text) {
   if (spaced.length) return { entries: spaced, missing: null };
   return { entries: [], missing: text.trim() };
 }
-const tidy = (raw) => raw.replace(/[’‘]/g, "'").replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "")
+// What a sharing app adds around the words (same as Android's sharedWords):
+// Kindle sends “stubborn,” + a blank line + “— Never Lie by Freida McFadden https://…”
+// → “stubborn,”. Links and “— Title by Author” lines go; the first line stays.
+function sharedWords(text) {
+  const lines = text.replace(/https?:\/\/\S+/g, ' ').split(/\r?\n/).map((l) => l.trim())
+    .filter((l) => l && !/^(—|–|- )/.test(l));
+  const first = lines[0] || "";
+  const q = first.match(/^["“”'‘’«](.+)["“”'‘’»][,.;:!?]*$/);
+  return q ? q[1] : first;
+}
+const tidy = (raw) => sharedWords(raw).replace(/[’‘]/g, "'").replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "")
   .replace(/\s+/g, " ").slice(0, 60).replace(/^./, (c) => c.toUpperCase());
 
 // ---- word of the day (same pick as the app) -------------------------------
