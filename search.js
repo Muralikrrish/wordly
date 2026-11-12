@@ -90,7 +90,7 @@ const Search = (() => {
       const n = q.trim().length;
       word = `<span class="dim">${esc(e.word.slice(0, at))}<b>${esc(e.word.slice(at, at + n))}</b>${esc(e.word.slice(at + n))}</span>`;
     }
-    return `<div class="rrow"><a class="rlink" href="#/word/${e.id}"><div class="wrow"><div><span class="w">${word}</span><span class="t">${pos(e.type)}</span></div>
+    return `<div class="rrow"><a class="rlink" data-press="0.97" href="#/word/${e.id}"><div class="wrow"><div><span class="w">${word}</span><span class="t">${pos(e.type)}</span></div>
       <div class="g">${esc(e.preview || "")}</div></div></a><div class="rdiv"></div></div>`;
   }
 

@@ -101,8 +101,9 @@ async function loadIndex() {
 }
 async function definition(id) {
   if (Quick.isQuick(id)) return Quick.definition(id);
-  const n = Math.floor(id / 10);            // ten words to a file (tools/build_web.py CHUNK)
-  if (!data.defs.has(n)) data.defs.set(n, json(`data/w/${n}.json`).catch((err) => { data.defs.delete(n); throw err; }));
+  // One small file per word (tools/build_web.py d/<id>.json).
+  if (!data.defs.has(id)) data.defs.set(id, json(`data/d/${id}.json`).then((d) => ({ [id]: d })).catch((err) => { data.defs.delete(id); throw err; }));
+  const n = id;
   const chunk = await data.defs.get(n);
   return chunk[id];
 }
@@ -322,6 +323,7 @@ const epochDay = () => { const n = new Date(); return Math.floor(Date.UTC(n.getF
 // ---- views and the router (screens change the way the app's do) ----------
 let $view = null;
 let tracker = null;           // the current page's RevealTracker
+const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 let navIndex = 0;             // position in history, to tell back from forward
 const scrolls = new Map();    // each screen's scroll, kept for coming back
 
@@ -476,10 +478,12 @@ async function route() {
 
   // Back or forward? Each history entry remembers its place in the trail.
   let returning = false;
+  let swiped = false;           // iPhone's swipe-back: Safari has animated it already
   const st = history.state;
   if (st && typeof st.i === "number") {
     returning = st.i < navIndex;
     navIndex = st.i;
+    swiped = returning && IS_IOS && !(performance.now() - (window.__appBackAt || 0) < 1500);
   } else {
     navIndex += 1;
     history.replaceState({ i: navIndex }, "");
@@ -538,6 +542,10 @@ async function route() {
     // First screen: the splash lifts away and the cards rise as it goes.
     document.getElementById("splash") && Motion.liftSplash();
     old && old.remove();
+  } else if (swiped) {
+    // Safari's swipe has just slid this page in from its snapshot: show it as
+    // it is, without playing the app's own back transition on top.
+    old && old.remove();
   } else {
     Motion.transition(old, $view, transitionKind);
   }
@@ -554,6 +562,9 @@ history.scrollRestoration = "manual";
 const startLook = new URLSearchParams(location.search).get("look");
 if (startLook) history.replaceState(null, "", location.pathname + "#/look/" + encodeURIComponent(startLook));
 route();
+// The extras (stories, families, mix-ups) a word page shows: fetched quietly
+// soon after opening, so the first word tapped never waits for them.
+setTimeout(() => { extras().catch(() => {}); }, 1800);
 
 // A finger on a word starts fetching its definition before the tap even
 // lands, so the page usually opens with its text ready.

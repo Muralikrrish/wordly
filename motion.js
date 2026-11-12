@@ -6,6 +6,14 @@
    home icons. All motion runs on transform/opacity only, so it stays smooth. */
 "use strict";
 
+// Every in-app Back (tray arrow, bar arrows, quiz…) goes through history.back();
+// noting when lets the router tell it from iPhone's own swipe-back, which has
+// already animated the page in by itself (see app.js route).
+{
+  const back = history.back.bind(history);
+  history.back = () => { window.__appBackAt = performance.now(); back(); };
+}
+
 const Motion = (() => {
   const dpr = () => 1; // CSS px already equal the app's dp on phones
 

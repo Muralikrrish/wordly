@@ -74,7 +74,7 @@ const Lists = (() => {
       const at = e.word.toLowerCase().indexOf(root);
       if (at >= 0) w = `<span class="dim">${esc(e.word.slice(0, at))}<b>${esc(e.word.slice(at, at + root.length))}</b>${esc(e.word.slice(at + root.length))}</span>`;
     }
-    return `<div class="crow2"><a class="clink" href="#/word/${e.id}"><div class="wrow"><div><span class="w">${w}</span><span class="t">${pos(e.type)}</span></div>
+    return `<div class="crow2"><a class="clink" data-press="0.97" href="#/word/${e.id}"><div class="wrow"><div><span class="w">${w}</span><span class="t">${pos(e.type)}</span></div>
       <div class="g g3">${esc(e.preview || "")}</div></div></a><div class="cdiv"></div></div>`;
   }
 
