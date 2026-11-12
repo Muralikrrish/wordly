@@ -142,6 +142,9 @@ const Motion = (() => {
     lastY = y;
   }, { passive: true });
   const scrollingDown = () => performance.now() - downAt < 120;
+  // Put a page back where the reader left it, without that jump counting as
+  // "scrolling down" (which would make its rows rise in again on returning).
+  function restoreScroll(y) { lastY = y; downAt = 0; scrollTo(0, y); lastY = scrollY; }
 
   /* Decides when items rise in (RevealTracker): everything on screen when the
      page first opens (a cascade from `openedAt`), then — after that — each item
@@ -291,5 +294,5 @@ const Motion = (() => {
     return Promise.resolve();
   }
 
-  return { ease, tween, Spring, onFrame, REVEAL, revealNow, revealStyle, RevealTracker, syncFlow, transition, liftSplash, bezier };
+  return { ease, tween, Spring, onFrame, REVEAL, revealNow, revealStyle, RevealTracker, syncFlow, transition, liftSplash, bezier, restoreScroll };
 })();

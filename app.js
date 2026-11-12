@@ -549,7 +549,7 @@ async function route() {
   } else {
     Motion.transition(old, $view, transitionKind);
   }
-  scrollTo(0, returning ? scrolls.get(key) || 0 : 0);
+  Motion.restoreScroll(returning ? scrolls.get(key) || 0 : 0);
   Settings.topColor();
   tracker.open(performance.now());
   firstRoute = false;
