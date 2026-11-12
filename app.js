@@ -91,7 +91,7 @@ async function json(path) {
 async function loadIndex() {
   if (data.index) return;
   const rows = await json("data/index.json");
-  data.index = rows.map(([id, word, type, preview, f]) => ({ id, word, type, preview, f, norm: word.toLowerCase() }));
+  data.index = rows.map(([id, word, type, preview, f]) => ({ id, word, type, preview, f, norm: word.toLowerCase(), lo: loose(word.toLowerCase()) }));
   for (const e of data.index) {
     data.byId.set(e.id, e);
     if (!data.byNorm.has(e.norm)) data.byNorm.set(e.norm, []);
@@ -114,13 +114,16 @@ const extras = async () => (data.extras ??= await json("data/extras.json"));
 // form's word ("went" → go), Wordly's words starting with the letters, quick
 // (WordNet) words starting with them, then Wordly's words containing them.
 // Quick words come from files fetched while typing (quick.js Quick.prepare).
+// Hyphens, spaces and apostrophes don't matter ("soi disant" finds Soi-disant).
+const loose = (s) => s.replace(/[-\s'’–]/g, "");
 function search(q, limit = 60) {
   q = q.trim().toLowerCase();
   if (!q) return [];
+  const lq = loose(q), useLoose = lq.length >= 3;
   const exact = [], starts = [], contains = [];
   for (const e of data.index) {
-    if (e.norm === q) exact.push(e);
-    else if (e.norm.startsWith(q)) starts.push(e);
+    if (e.norm === q || (useLoose && e.lo === lq)) exact.push(e);
+    else if (e.norm.startsWith(q) || (useLoose && e.lo.startsWith(lq))) starts.push(e);
     else if (e.norm.includes(q)) contains.push(e);
   }
   const seen = new Set();
@@ -179,6 +182,10 @@ function lookUp(text) {
   // An irregular form ("ran", "mice") is the same word as its base.
   const irregular = Quick.irregularNow(w);
   if (irregular.length) return { entries: irregular, missing: null };
+  // Written with or without a hyphen or space ("soi disant", "wellbeing").
+  const lw = loose(w);
+  const spaced = lw.length >= 3 ? data.index.filter((e) => e.lo === lw) : [];
+  if (spaced.length) return { entries: spaced, missing: null };
   return { entries: [], missing: text.trim() };
 }
 const tidy = (raw) => raw.replace(/[’‘]/g, "'").replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "")
