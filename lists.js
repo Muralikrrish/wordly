@@ -67,6 +67,10 @@ const Lists = (() => {
   // ---- collection pages ------------------------------------------------------
   const DIE = (size) => `<svg viewBox="0 0 20 20" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="1.4" y="1.4" width="17.2" height="17.2" rx="4.6"/><g fill="currentColor" stroke="none"><circle cx="6" cy="6" r="1.7"/><circle cx="14" cy="6" r="1.7"/><circle cx="10" cy="10" r="1.7"/><circle cx="6" cy="14" r="1.7"/><circle cx="14" cy="14" r="1.7"/></g></svg>`;
   let sortChoice = "Shuffle";
+  // Each list's shuffled order (word ids), kept while the reader dips into a
+  // word and comes back — a new shuffle only on opening the list afresh or on
+  // tapping Shuffle (as in the app).
+  const shuffles = new Map();
 
   function collectionRow(e, root) {
     let w = esc(e.word);
@@ -83,7 +87,9 @@ const Lists = (() => {
     const forms = family ? String(family.forms || family.id).split("|").map((x) => x.trim().toLowerCase()).filter(Boolean) : [];
     const rootIn = (w) => forms.find((f) => w.toLowerCase().includes(f));
     let sort = c.keepOrder ? "A–Z" : (returning ? sortChoice : "Shuffle");
-    let shuffled = null;
+    const shufKey = c.id || c.title;
+    let shuffled = returning && shuffles.has(shufKey)
+      ? shuffles.get(shufKey).map((id) => data.byId.get(id)).filter(Boolean) : null;
     view.innerHTML = `${subBar("")}
       <div class="chead sheen" style="background:${gradient(seed)}">
         <div class="ctop"><span class="cbadge">${icon(iconName)}</span><span class="cgrp">${esc(c.group.toUpperCase())}</span></div>
@@ -112,7 +118,11 @@ const Lists = (() => {
     };
     const out = view.querySelector(".clist");
     function render(animate) {
-      let rows = sort === "A–Z" ? list : sort === "Z–A" ? [...list].reverse() : (shuffled ??= [...list].sort(() => Math.random() - 0.5));
+      let rows = sort === "A–Z" ? list : sort === "Z–A" ? [...list].reverse() : (shuffled ??= (() => {
+        const s = [...list].sort(() => Math.random() - 0.5);
+        shuffles.set(shufKey, s.map((e) => e.id));
+        return s;
+      })());
       if (c.keepOrder) rows = c.items.map((i) => data.byId.get(i)).filter(Boolean);
       const lettered = !c.keepOrder && rows.length >= 40 && sort !== "Shuffle";
       let html = "", letter = null;

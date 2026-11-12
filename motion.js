@@ -265,6 +265,10 @@ const Motion = (() => {
     if (kind === "fromWord") {
       newNode.style.opacity = "0";
       tween({ duration: 340, easing: ease.fastOutSlowIn, update: (e) => {
+        // Grow about the middle of the SCREEN (as the app does), not the middle
+        // of the whole page — on a long list that point is far below, which
+        // made the visible rows drift upward.
+        newNode.style.transformOrigin = `50% ${(scrollY + innerHeight / 2).toFixed(0)}px`;
         newNode.style.transform = `scale(${(0.98 + 0.02 * e).toFixed(4)})`;
       }, done: () => { newNode.style.transform = ""; } });
       tween({ duration: 260, update: (e) => { newNode.style.opacity = e; }, done: () => { newNode.style.opacity = ""; } });

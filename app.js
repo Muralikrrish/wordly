@@ -574,7 +574,7 @@ addEventListener("pointerdown", (e) => {
   if (m && data.index) definition(Number(m[1])).catch(() => {});
 }, { passive: true });
 
-// iPhone Safari sometimes swallows the first tap on a link (it reads the tap
+// iPhone Safari sometimes swallows the first tap on a link or button (it reads the tap
 // as a "hover" while list rows are still fading in) and only a second tap
 // opens it. A clean tap — finger lifted within half a second, moved under
 // 10 px, page not scrolling — opens the link straight away instead.
@@ -582,7 +582,9 @@ addEventListener("pointerdown", (e) => {
   let t0 = null, lastScroll = 0;
   addEventListener("scroll", () => { lastScroll = performance.now(); }, { passive: true });
   addEventListener("touchstart", (e) => {
-    const a = e.touches.length === 1 && e.target.closest && e.target.closest('a[href^="#/"]');
+    // Links, buttons and the word page's tray buttons (Safari also held back
+    // the tray's Back while a definition was still revealing).
+    const a = e.touches.length === 1 && e.target.closest && e.target.closest('a[href^="#/"], button, [role="button"], .tray2 .slot');
     t0 = a && performance.now() - lastScroll > 120
       ? { a, x: e.touches[0].clientX, y: e.touches[0].clientY, at: performance.now() } : null;
   }, { passive: true });
