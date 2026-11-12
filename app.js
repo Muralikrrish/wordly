@@ -53,6 +53,12 @@ const store = {
   get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } },
 };
+// One-time fresh start (Nov 2026): word ids change when idiom names are
+// standardised, so Saved, Recent and the user's lists are cleared once.
+if (!store.get("reset2026", false)) {
+  for (const k of ["saved", "recent", "lists", "listItems", "quickSeen"]) { try { localStorage.removeItem(k); } catch { /* private mode */ } }
+  store.set("reset2026", true);
+}
 const saved = () => store.get("saved", []);            // [{id, ts}]
 const recent = () => store.get("recent", []);          // [{id, ts}]
 const wishlist = () => store.get("wishlist", []);      // [{word, ts}]
