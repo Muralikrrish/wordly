@@ -36,7 +36,7 @@ const Settings = (() => {
   // Each face's four weights, loaded only when first used.
   (() => {
     const css = FONTS.map((f) => [["regular", 400, "normal"], ...(f.italic ? [["italic", 400, "italic"]] : []), ["semibold", 600, "normal"], ["bold", 700, "normal"]]
-      .map(([w, weight, style]) => `@font-face{font-family:"RF-${f.file}";src:url(fonts/${f.file}_${w}.ttf);font-weight:${weight};font-style:${style};font-display:swap}`).join("")).join("");
+      .map(([w, weight, style]) => `@font-face{font-family:"RF-${f.file}";src:url(fonts/${f.file}_${w}.ttf);font-weight:${weight};font-style:${style};font-display:block}`).join("")).join("");
     const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
   })();
 

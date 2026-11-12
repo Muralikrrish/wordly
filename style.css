@@ -1,15 +1,15 @@
 /* Wordly web — the app's "Ocean" dark look: fonts, colours and card shapes. */
-@font-face { font-family: Outfit; src: url(fonts/outfit_regular.ttf); font-weight: 400; font-display: swap; }
-@font-face { font-family: Outfit; src: url(fonts/outfit_semibold.ttf); font-weight: 600; font-display: swap; }
-@font-face { font-family: Outfit; src: url(fonts/outfit_bold.ttf); font-weight: 700; font-display: swap; }
-@font-face { font-family: Inter; src: url(fonts/inter_regular.ttf); font-weight: 400; font-display: swap; }
-@font-face { font-family: Inter; src: url(fonts/inter_medium.ttf); font-weight: 500; font-display: swap; }
-@font-face { font-family: Inter; src: url(fonts/inter_semibold.ttf); font-weight: 600; font-display: swap; }
-@font-face { font-family: Inter; src: url(fonts/inter_italic.ttf); font-style: italic; font-display: swap; }
-@font-face { font-family: Literata; src: url(fonts/literata_regular.ttf); font-weight: 400; font-display: swap; }
-@font-face { font-family: Literata; src: url(fonts/literata_italic.ttf); font-style: italic; font-display: swap; }
-@font-face { font-family: Literata; src: url(fonts/literata_semibold.ttf); font-weight: 600; font-display: swap; }
-@font-face { font-family: Literata; src: url(fonts/literata_bold.ttf); font-weight: 700; font-display: swap; }
+@font-face { font-family: Outfit; src: url(fonts/outfit_regular.ttf); font-weight: 400; font-display: block; }
+@font-face { font-family: Outfit; src: url(fonts/outfit_semibold.ttf); font-weight: 600; font-display: block; }
+@font-face { font-family: Outfit; src: url(fonts/outfit_bold.ttf); font-weight: 700; font-display: block; }
+@font-face { font-family: Inter; src: url(fonts/inter_regular.ttf); font-weight: 400; font-display: block; }
+@font-face { font-family: Inter; src: url(fonts/inter_medium.ttf); font-weight: 500; font-display: block; }
+@font-face { font-family: Inter; src: url(fonts/inter_semibold.ttf); font-weight: 600; font-display: block; }
+@font-face { font-family: Inter; src: url(fonts/inter_italic.ttf); font-style: italic; font-display: block; }
+@font-face { font-family: Literata; src: url(fonts/literata_regular.ttf); font-weight: 400; font-display: block; }
+@font-face { font-family: Literata; src: url(fonts/literata_italic.ttf); font-style: italic; font-display: block; }
+@font-face { font-family: Literata; src: url(fonts/literata_semibold.ttf); font-weight: 600; font-display: block; }
+@font-face { font-family: Literata; src: url(fonts/literata_bold.ttf); font-weight: 700; font-display: block; }
 
 :root {
   /* The app's default theme (AppTheme CLASSIC, dark): background, surfaceVariant,

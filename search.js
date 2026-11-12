@@ -156,14 +156,28 @@ const Search = (() => {
     let heroOpen = true;
     // The hero's natural height (its content minus the 26 dp pull-up).
     const heroH = () => hero.firstElementChild.nextElementSibling.offsetHeight - 26;
+    // Everything after `el` on this screen, drawn `from` px away from its new
+    // place and gliding back (browser animation engine: no layout per frame).
+    const FOSI = "cubic-bezier(0.4, 0, 0.2, 1)";
+    function slideAfter(el, from, duration) {
+      for (let n = el; n && n !== view; n = n.parentElement) {
+        for (let s = n.nextElementSibling; s; s = s.nextElementSibling) {
+          if (/absolute|fixed/.test(getComputedStyle(s).position)) continue;   // placed on its own: unaffected
+          s.animate([{ transform: `translate3d(0, ${from}px, 0)` }, { transform: "translate3d(0, 0, 0)" }], { duration, easing: FOSI });
+        }
+      }
+    }
     function setHero(open) {
       if (open === heroOpen) return;
       heroOpen = open;
-      const from = hero.offsetHeight, to = open ? heroH() : 0;
-      hero.style.overflow = "hidden";
-      tween({ duration: 360, easing: ease.fastOutSlowIn, update: (k) => { hero.style.height = `${from + (to - from) * k}px`; },
-        done: () => { if (open) { hero.style.height = ""; hero.style.overflow = ""; } } });
-      hero.animate([{ opacity: open ? 0 : 1 }, { opacity: open ? 1 : 0 }], { duration: open ? 360 : 200, fill: "forwards" });
+      const from = hero.offsetHeight;
+      // The hero takes its new height at once; the bar and all below glide there.
+      hero.style.height = open ? "" : "0px";
+      hero.style.overflow = open ? "" : "visible";
+      const to = hero.offsetHeight;
+      slideAfter(hero, from - to, 360);
+      const a = hero.animate([{ opacity: open ? 0 : 1 }, { opacity: open ? 1 : 0 }], { duration: open ? 360 : 200, fill: "forwards" });
+      if (!open) a.onfinish = () => { if (!heroOpen) hero.style.overflow = "hidden"; };
     }
 
     // Recent chips: under the bar while it is focused and empty (expand 300 /
@@ -185,8 +199,11 @@ const Search = (() => {
         [...flow.children].forEach((c, i) => c.animate(
           [{ opacity: 0, transform: "translateY(22px)" }, { opacity: 1, transform: "translateY(0)" }],
           { duration: 520, delay: 30 + Math.min(i, 12) * 35, easing: "cubic-bezier(.4,0,.2,1)", fill: "backwards" }));
+        chipsWrap.getAnimations().forEach((a) => a.cancel());
+        chipsWrap.style.overflow = "";
         const h = chipsIn.offsetHeight;
-        tween({ duration: 300, easing: ease.fastOutSlowIn, update: (k) => { chipsWrap.style.height = `${h * k}px`; }, done: () => { chipsWrap.style.height = "auto"; } });
+        chipsWrap.style.height = "auto";                    // full height at once…
+        slideAfter(chipsWrap, -h, 300);                     // …the results glide down to make room
         chipsWrap.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
         const see = chipsIn.querySelector(".seeall .chev");
         const nudge = new Spring(0, { damping: 0.5, stiffness: 600, onUpdate: (v) => { see.style.transform = `translateX(${(3 * v).toFixed(2)}px)`; } });
@@ -195,8 +212,11 @@ const Search = (() => {
         see.parentElement.addEventListener("pointerleave", () => nudge.to(0));
       } else {
         const h = chipsWrap.offsetHeight;
-        tween({ duration: 220, easing: ease.fastOutSlowIn, update: (k) => { chipsWrap.style.height = `${h * (1 - k)}px`; } });
-        chipsWrap.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: "forwards" }).onfinish = () => { chipsWrap.getAnimations().forEach((a) => a.cancel()); };
+        chipsWrap.style.height = "0px"; chipsWrap.style.overflow = "visible";   // fades where it was
+        slideAfter(chipsWrap, h, 220);
+        chipsWrap.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: "forwards" }).onfinish = () => {
+          if (!chipsOpen) { chipsWrap.style.overflow = ""; chipsWrap.getAnimations().forEach((a) => a.cancel()); }
+        };
       }
     }
     chipsWrap.style.height = "0px";

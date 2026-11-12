@@ -17,6 +17,8 @@
   background-size: 300% 300%; background-position: 50% 50%; background-repeat: no-repeat;
   will-change: transform; animation: sheen 8.5s linear infinite;
 }
+/* Web app: the cards stay still — no moving glow (the Android app keeps it). */
+.sheen::before { display: none; }
 .sheen.soft::before { --s: 0.07; }
 .sheen > * { position: relative; z-index: 1; }
 /* The glow band sits in the middle of a card-sized layer that slides corner to corner

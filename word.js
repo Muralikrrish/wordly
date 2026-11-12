@@ -456,10 +456,23 @@ const Word = (() => {
       sec.openSpring = openS;
       card.addEventListener("click", () => toggle(sec, sections[Number(sec.dataset.i)][1]));
     });
+    const EMPH = "cubic-bezier(0.2, 0, 0, 1)";          // ease.emphasized
+    // Everything laid out after `sec` on the page (later sections, the footer):
+    // drawn `from` px away from its new place, gliding back to it.
+    function slideFollowers(sec, from, duration) {
+      const els = [];
+      for (let n = sec; n && n !== bodyIn; n = n.parentElement) {
+        for (let s = n.nextElementSibling; s; s = s.nextElementSibling) els.push(s);
+      }
+      for (const el of els) {
+        if (/absolute|fixed/.test(getComputedStyle(el).position)) continue;   // placed on its own: unaffected
+        el.animate([{ transform: `translate3d(0, ${from}px, 0)` }, { transform: "translate3d(0, 0, 0)" }], { duration, easing: EMPH });
+      }
+    }
     function closeSilently(sec) {
       const b = sec.querySelector(".body");
       b.getAnimations().forEach((a) => a.cancel());
-      b.style.height = "0px"; b.innerHTML = "";
+      b.style.height = "0px"; b.style.overflow = ""; b.innerHTML = "";
       sec.classList.remove("open");
       sec.openSpring.snap(0);
     }
@@ -471,9 +484,16 @@ const Word = (() => {
         sec.openSpring.to(0);
         const h = b.offsetHeight;
         const prose = b.firstElementChild;
-        prose && prose.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: "forwards" });
-        tween({ duration: 300, easing: ease.emphasized, update: (k) => { b.style.height = `${h * (1 - k)}px`; },
-          done: () => { b.innerHTML = ""; b.style.height = "0px"; } });
+        // The page takes its closed layout at once; what's below slides up into
+        // place and the text is wiped away from the bottom — both on the
+        // browser's animation engine, no layout work per frame.
+        b.style.height = "0px"; b.style.overflow = "visible";
+        slideFollowers(sec, h, 300);
+        if (prose) {
+          prose.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: "forwards" });
+          prose.animate([{ clipPath: "inset(0 0 0 0)" }, { clipPath: "inset(0 0 100% 0)" }], { duration: 300, easing: EMPH, fill: "forwards" })
+            .onfinish = () => { if (!sec.classList.contains("open")) { b.innerHTML = ""; b.style.overflow = ""; } };
+        }
         return;
       }
       // Only one open at a time: others close at once, the view held still.
@@ -496,13 +516,13 @@ const Word = (() => {
       const glide = travel < 6 ? 0 : Math.min(580, Math.max(340, 300 + travel * 0.4));
       const unfold = Math.max(glide, 320);
       document.querySelector(".wp").style.minHeight = `${targetY + innerHeight + full}px`;
-      if (glide) {
-        const from = scrollY;
-        tween({ duration: glide, easing: ease.emphasized, update: (k) => scrollTo(0, from + (targetY - from) * k) });
-      }
-      b.style.height = "0px";
-      tween({ duration: unfold, easing: ease.emphasized, update: (k) => { b.style.height = `${full * k}px`; },
-        done: () => { b.style.height = "auto"; } });
+      // Safari's own smooth scroll (on the compositor) rather than a scripted one.
+      if (glide) scrollTo({ top: targetY, behavior: "smooth" });
+      // The section takes its full height at once; what's below slides down
+      // from where it was and the text is uncovered from the top as it goes.
+      b.style.height = "auto"; b.style.overflow = "";
+      slideFollowers(sec, -full, unfold);
+      b.firstElementChild.animate([{ clipPath: "inset(0 0 100% 0)" }, { clipPath: "inset(0 0 0 0)" }], { duration: unfold, easing: EMPH });
       b.firstElementChild.animate([{ opacity: 0 }, { opacity: 1 }], { duration: unfold * 0.6 });
       revealLines(b.firstElementChild, Math.round(glide * 0.7));
     }

@@ -34,6 +34,18 @@
   document.documentElement.style.background = c;
   document.querySelector('meta[name="theme-color"]').setAttribute("content", c);
   if (!dark) document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').setAttribute("content", "default");
+  // Start fetching the app's own typeface and the reader's chosen reading font
+  // now, so no page ever draws in a stand-in font first (see font-display: block).
+  var file = { LITERATA: "literata", MERRIWEATHER: "merriweather", OUTFIT: "outfit", FRAUNCES: "fraunces", LORA: "lora",
+    PLAYFAIR: "playfair", INTER: "inter", DM_SANS: "dm_sans", POPPINS: "poppins", MANROPE: "manrope", ALEGREYA: "alegreya",
+    PLUS_JAKARTA: "jakarta", HANKEN: "hanken" }[s.font || "LITERATA"] || "literata";
+  ["outfit_regular", "outfit_semibold", "outfit_bold", "inter_regular", file + "_regular", file + "_semibold", file + "_bold"]
+    .filter(function (f, i, a) { return a.indexOf(f) === i; })
+    .forEach(function (f) {
+      var l = document.createElement("link");
+      l.rel = "preload"; l.as = "font"; l.type = "font/ttf"; l.crossOrigin = "anonymous"; l.href = "fonts/" + f + ".ttf";
+      document.head.appendChild(l);
+    });
 })();
 </script>
 </head>
