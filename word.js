@@ -63,7 +63,10 @@ const Word = (() => {
       lineOf.push(line);
     }
     const lines = line + 1;
-    const below = innerHeight + 240;    // further down: off screen until long after the cascade ends
+    // Further down than this: off screen until long after the cascade ends.
+    // Measured from the top of the text, not the screen — while the page
+    // slides in (e.g. from the home cards) it can still be off screen itself.
+    const below = root.getBoundingClientRect().top + innerHeight + 240;
     const delayOf = (i) => startDelay + Math.min(lineOf[i] * LINE.stagger, LINE.maxStart);
     units.forEach((u, i) => {
       if (tops[i] > below) return;
