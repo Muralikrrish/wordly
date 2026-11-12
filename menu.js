@@ -127,7 +127,7 @@ const Menu = (() => {
       if (a === "about") return go("#/about");
       if (a === "rate") return void open_(PLAY_LINK);
       if (a === "share") {
-        const text = `Check out Wordly, a vocabulary builder that explains words worth knowing:\n${WEB_LINK()}`;
+        const text = `Check out Wordly, a dictionary and vocabulary builder that explains words clearly:\n${WEB_LINK()}`;
         if (navigator.share) navigator.share({ title: "Wordly: Vocabulary Builder", text }).catch(() => {});
         else navigator.clipboard?.writeText(text);
         return;
@@ -151,7 +151,7 @@ const Menu = (() => {
       <div style="height:28px"></div><span class="adisc">${LOGO}</span><div style="height:14px"></div>
       <span class="wm awm">Wordly</span><div class="aver">Version ${VERSION}</div><div style="height:22px"></div>
       <div class="atag">A treasury of words, always at hand.</div><div style="height:12px"></div>
-      <div class="abody">More than 16,000 carefully chosen English words, phrases and idioms, each explained in clear, vivid language that makes its meaning stick. Every word you open is kept on your device — so Wordly is fast, private, and keeps working without the internet.</div>
+      <div class="abody">Nearly 18,000 carefully chosen English words, phrases and idioms, each explained in clear, vivid language that makes its meaning stick — and short meanings for 125,000+ more. Every word you open is kept on your device, so Wordly is fast, private, and keeps working without the internet.</div><div class="abody" style="opacity:.75">Quick definitions for words Wordly doesn't explain yet come from Open English WordNet (globalwordnet.github.io), licensed under CC BY 4.0.</div>
       <div style="height:22px"></div><div class="aby">Made by Muralidharan</div><div style="height:18px"></div>
       <a class="apriv" href="#/privacy">Privacy policy</a><div style="height:32px"></div></div>`;
     Settings.wireBack(view);

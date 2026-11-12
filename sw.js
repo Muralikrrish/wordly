@@ -1,11 +1,12 @@
 /* Wordly web — offline support. The app itself (page, script, styles, fonts,
-   search index) is stored on the first visit; each definition file is stored
-   the first time a word in it is opened, so words already read open offline.
+   search index) is stored on the first visit; each definition file (and each
+   quick-definition file in data/q/) is stored the first time it is read, so
+   words already read open offline.
    Bump APP when the page's own files change, so phones pick up the new ones. */
-const APP = "wordly-app-13";
+const APP = "wordly-app-14";
 const DATA = "wordly-data";
 const SHELL = [
-  "./", "index.html", "style.css", "home.css", "word.css", "search.css", "lists.css", "quiz.css", "settings.css", "icons.js", "motion.js", "app.js", "word.js", "search.js", "lists.js", "quiz.js", "settings.js", "menu.js", "look.js", "manifest.webmanifest", "icon-512.png",
+  "./", "index.html", "style.css", "home.css", "word.css", "search.css", "lists.css", "quiz.css", "settings.css", "icons.js", "motion.js", "app.js", "word.js", "search.js", "lists.js", "quiz.js", "settings.js", "menu.js", "look.js", "quick.js", "manifest.webmanifest", "icon-512.png",
   "data/index.json", "data/collections.json", "data/extras.json",
   "fonts/outfit_regular.ttf", "fonts/outfit_semibold.ttf", "fonts/outfit_bold.ttf",
   "fonts/inter_regular.ttf", "fonts/inter_medium.ttf", "fonts/inter_semibold.ttf", "fonts/inter_italic.ttf",
@@ -26,7 +27,7 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
   // Definitions: from the phone if read before, else fetched and kept.
-  if (url.pathname.includes("/data/w/") || url.pathname.includes("/data/defs/")) {
+  if (url.pathname.includes("/data/w/") || url.pathname.includes("/data/defs/") || url.pathname.includes("/data/q/")) {
     e.respondWith(caches.open(DATA).then(async (c) => {
       const hit = await c.match(e.request);
       if (hit) return hit;

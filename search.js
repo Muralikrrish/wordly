@@ -210,7 +210,13 @@ const Search = (() => {
       setChips(focused && !q.trim());
       if (!q.trim()) { out.innerHTML = ""; body.hidden = false; return; }
       body.hidden = true;
+      // Quick (WordNet) words arrive in small files while typing: draw again
+      // once this query's file is in. Until then, an empty result waits.
+      const qn = q.trim().toLowerCase();
+      const waiting = !Quick.ready(qn);
+      Quick.prepare(qn).then((fresh) => { if (fresh && input.value === q) render(); });
       const found = search(q);
+      if (!found.length && waiting) { out.innerHTML = ""; return; }
       if (found.length) { out.innerHTML = found.map((e) => resultRow(e, q)).join("") + `<div style="height:24px"></div>`; return; }
       const near = closestWords(q);
       if (near.length) {

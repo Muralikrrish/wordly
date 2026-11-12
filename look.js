@@ -9,9 +9,17 @@
 const Look = (() => {
   const BACK = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>`;
 
-  function page(view, raw) {
+  async function page(view, raw) {
     const picked = tidy(raw || "");
+    // Quick (WordNet) words live in files fetched on demand: get the ones this
+    // pick may need first (it is quick — a few small files).
+    if (picked) await prepareLookUp(picked).catch(() => {});
     const { entries, missing } = picked ? lookUp(picked) : { entries: [], missing: "" };
+    // A quick word's card shows its first three meanings with their examples
+    // (LookupActivity quickShort); Read more shows all of it.
+    const html = new Map();
+    await Promise.all(entries.filter((e) => e.quick).map((e) =>
+      definition(e.id).then((d) => d && html.set(e.id, d[0])).catch(() => {})));
     // Only the word itself (or a plain form: "parties") opens straight away;
     // otherwise the nearest words are offered to pick from.
     let nearby = [], related = true;
@@ -51,12 +59,17 @@ const Look = (() => {
         const e = list[Math.min(st.shown, list.length - 1)];
         const more = st.more === e.id;
         const want = st.chosen ? missing : null;
+        const qfull = e.quick ? html.get(e.id) : null;
+        const qshort = qfull ? Quick.short(qfull) : null;
+        const canMore = !e.quick || (qfull && qshort !== qfull);
         card.innerHTML = `<div class="lkhead" style="background:${gradient(st.seed)}"><div class="lkk w">WORDLY</div><div class="lkw">${esc(e.word)}</div><div class="lkt">${pos(e.type)}</div></div>
           ${list.length > 1 ? `<div class="lkchips">${list.map((x, i) => `<button class="lkchip ${i === st.shown ? "on" : ""}" data-i="${i}">${pos(x.type)}</button>`).join("")}</div>` : ""}
-          <div class="lkmean ${more ? "more" : ""}">${more ? `<div class="dprose lkprose"></div>` : `<div class="lkprev">${esc(e.preview || "")}</div>
+          <div class="lkmean ${more ? "more" : ""}">${more ? `<div class="dprose lkprose"></div>`
+            : qshort ? `<div class="dprose lkprose">${qshort}</div>${want && canMore ? `<button class="lkmore" data-a="more">Read more</button>` : ""}`
+            : `<div class="lkprev">${esc(e.preview || "")}</div>
             ${want ? `<button class="lkmore" data-a="more">Read more</button>` : ""}`}</div>
           ${want ? `<div class="lkacts">${wantRow(want, "Open in Wordly", "open")}</div>`
-            : `<div class="lkacts lkrow">${!more ? btn("Read more", "", "more") : backLink("less")}<span style="flex:1"></span>${btn("Open in Wordly", "on", "open")}</div>`}
+            : `<div class="lkacts lkrow">${!more ? (canMore ? btn("Read more", "", "more") : "") : backLink("less")}<span style="flex:1"></span>${btn("Open in Wordly", "on", "open")}</div>`}
           ${more && want ? backLink("less") : !more && st.chosen ? backLink("matches") : ""}`;
         if (more) definition(e.id).then((d) => { const p = card.querySelector(".lkprose"); if (p) p.innerHTML = (d && d[0]) || `<p>${esc(e.preview || "")}</p>`; });
       }
@@ -65,7 +78,7 @@ const Look = (() => {
     function wire(list) {
       card.querySelectorAll(".lkpill").forEach((b) => (b.onclick = () => {
         const e = data.byId.get(Number(b.dataset.id));
-        st.chosen = data.byNorm.get(e.norm) || [e];
+        st.chosen = entriesFor(e.norm) || [e];
         st.shown = Math.max(0, st.chosen.findIndex((x) => x.id === e.id));
         render();
       }));

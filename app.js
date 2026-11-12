@@ -64,6 +64,7 @@ function toggleSaved(id) {
   return now.some((r) => r.id === id);
 }
 function addRecent(id) {
+  Quick.remember(data.byId.get(id));
   store.set("recent", [{ id, ts: Date.now() }, ...recent().filter((r) => r.id !== id)].slice(0, 25));
 }
 const onWishlist = (w) => wishlist().some((r) => r.word.toLowerCase() === w.toLowerCase());
@@ -90,8 +91,10 @@ async function loadIndex() {
     if (!data.byNorm.has(e.norm)) data.byNorm.set(e.norm, []);
     data.byNorm.get(e.norm).push(e);
   }
+  Quick.restore();          // quick words opened before, for Recent / Saved
 }
 async function definition(id) {
+  if (Quick.isQuick(id)) return Quick.definition(id);
   const n = Math.floor(id / 10);            // ten words to a file (tools/build_web.py CHUNK)
   if (!data.defs.has(n)) data.defs.set(n, json(`data/w/${n}.json`).catch((err) => { data.defs.delete(n); throw err; }));
   const chunk = await data.defs.get(n);
@@ -101,15 +104,22 @@ const collections = async () => (data.cols ??= await json("data/collections.json
 const extras = async () => (data.extras ??= await json("data/extras.json"));
 
 // ---- search --------------------------------------------------------------
+// The app's order (DictionaryDb.search): exact matches, then an irregular
+// form's word ("went" → go), Wordly's words starting with the letters, quick
+// (WordNet) words starting with them, then Wordly's words containing them.
+// Quick words come from files fetched while typing (quick.js Quick.prepare).
 function search(q, limit = 60) {
   q = q.trim().toLowerCase();
   if (!q) return [];
-  const starts = [], contains = [];
+  const exact = [], starts = [], contains = [];
   for (const e of data.index) {
-    if (e.norm.startsWith(q)) starts.push(e);
+    if (e.norm === q) exact.push(e);
+    else if (e.norm.startsWith(q)) starts.push(e);
     else if (e.norm.includes(q)) contains.push(e);
   }
-  return [...starts, ...contains].slice(0, limit);
+  const seen = new Set();
+  return [...exact, ...Quick.exact(q), ...Quick.irregularNow(q), ...starts, ...Quick.startingWith(q, limit), ...contains]
+    .filter((e) => !seen.has(e.id) && seen.add(e.id)).slice(0, limit);
 }
 // ---- looking up a picked word (same rules as the Android card) ----------
 // Plain forms of a word, each flagged when it's only an inflection (same word).
@@ -147,12 +157,22 @@ function relatedTo(w, limit = 6) {
   }
   return [];
 }
+// Wordly's word first, else a quick (WordNet) one — DictionaryDb.entriesFor.
+const entriesFor = (norm) => data.byNorm.get(norm) || (Quick.exact(norm).length ? Quick.exact(norm) : null);
+/** Fetches the quick files lookUp may need (call before it). */
+const prepareLookUp = (text) => {
+  const w = text.trim().toLowerCase();
+  return Promise.all([...baseForms(w).map(([f]) => Quick.shard(f)), Quick.prepare(w)]);
+};
 function lookUp(text) {
   const w = text.trim().toLowerCase();
   for (const [form, same] of baseForms(w)) {
-    const hits = data.byNorm.get(form);
+    const hits = entriesFor(form);
     if (hits) return { entries: hits, missing: same ? null : text.trim() };
   }
+  // An irregular form ("ran", "mice") is the same word as its base.
+  const irregular = Quick.irregularNow(w);
+  if (irregular.length) return { entries: irregular, missing: null };
   return { entries: [], missing: text.trim() };
 }
 const tidy = (raw) => raw.replace(/[’‘]/g, "'").replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "")
@@ -378,7 +398,8 @@ function searchPage(q) {
 }
 
 // The word page lives in word.js (stage 2).
-function wordPage(id, seed, opts) {
+async function wordPage(id, seed, opts) {
+  if (Quick.isQuick(id)) await Quick.entry(id);     // a quick word opened from a link or a list
   return Word.render($view, id, seed, opts);
 }
 const speak = (w) => Word.speak(w);
@@ -473,7 +494,7 @@ async function route() {
     case "word": await wordPage(Number(parts[1]), params.has("c") ? Number(params.get("c")) : undefined,
       { wotd: params.has("w"), returning }); break;
     case "search": await searchPage(parts.slice(1).join("/")); break;
-    case "look": lookPage(parts.slice(1).join("/")); break;
+    case "look": await lookPage(parts.slice(1).join("/")); break;
     case "section": await sectionPage(parts[1]); break;
     case "collection": await collectionPage(parts[1], { returning }); break;
     case "families": await familiesPage(); break;

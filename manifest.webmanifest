@@ -1,7 +1,7 @@
 {
   "name": "Wordly",
   "short_name": "Wordly",
-  "description": "A vocabulary builder with clear, friendly explanations of over 16,000 words.",
+  "description": "An English dictionary and vocabulary builder: 125,000+ words, nearly 18,000 explained in depth.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
