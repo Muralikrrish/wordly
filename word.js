@@ -64,10 +64,22 @@ const Word = (() => {
     }
     const lines = line + 1;
     const below = innerHeight + 240;    // further down: off screen until long after the cascade ends
+    const delayOf = (i) => startDelay + Math.min(lineOf[i] * LINE.stagger, LINE.maxStart);
     units.forEach((u, i) => {
       if (tops[i] > below) return;
-      u.animate(KEYS, { duration: LINE.duration, delay: startDelay + Math.min(lineOf[i] * LINE.stagger, LINE.maxStart), fill: "backwards" });
+      u.animate(KEYS, { duration: LINE.duration, delay: delayOf(i), fill: "backwards" });
     });
+    // What isn't a word — list bullets and numbers, a quote's bar, a divider —
+    // stays hidden until the first line it belongs to (or, for a divider, the
+    // line after it) starts to rise, then fades in with that line.
+    const FADE = [{ opacity: 0 }, { opacity: 1 }];
+    for (const el of root.querySelectorAll("li, blockquote, hr")) {
+      const i = el.tagName === "HR"
+        ? units.findIndex((u) => el.compareDocumentPosition(u) & Node.DOCUMENT_POSITION_FOLLOWING)
+        : units.findIndex((u) => el.contains(u));
+      if (i < 0 || tops[i] > below) continue;
+      el.animate(FADE, { duration: LINE.duration * 0.6, delay: delayOf(i), fill: "backwards" });
+    }
     return startDelay + Math.min(Math.max(0, lines - 1) * LINE.stagger, LINE.maxStart);
   }
   // One element rising like a line of text (cards that follow the text).
