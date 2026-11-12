@@ -37,6 +37,10 @@
 .dprose blockquote { padding-left: 15px; border-left: 3px solid rgba(var(--ink-rgb),.25); }
 .dprose blockquote p { margin-bottom: 4px; }
 .dprose hr { border: 0; height: 1px; background: rgba(var(--ink-rgb),.14); }
+/* During the line reveal: a bullet / number, a quote's bar and a divider wait for their line (word.js revealLines). */
+.dprose li.rvh::marker { color: transparent; }
+.dprose blockquote.rvh { border-left-color: transparent; }
+.dprose hr.rvh { background: transparent; }
 .dprose .table { overflow-x: auto; }
 .dprose table { border-collapse: collapse; min-width: 100%; font-size: 0.9em; }
 .dprose th, .dprose td { padding: 9px; border: 1px solid rgba(var(--ink-rgb),.14); vertical-align: top; text-align: left; }
