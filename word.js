@@ -52,9 +52,10 @@ const Word = (() => {
     const units = [...root.querySelectorAll(".rv, tr")];
     const blockOf = (u) => { let n = u; while (n.parentElement && n.parentElement !== root) n = n.parentElement; return n; };
     let line = -1, lastTop = null, lastBlock = null;
-    const lineOf = [];
+    const lineOf = [], tops = [];
     for (const u of units) {
       const top = Math.round(u.getBoundingClientRect().top);
+      tops.push(top);
       const block = blockOf(u);
       if (lastBlock !== null && block !== lastBlock) line += 1;          // the gap line
       if (u.tagName === "TR" || lastTop === null || Math.abs(top - lastTop) > 3 || block !== lastBlock) line += 1;
@@ -62,7 +63,9 @@ const Word = (() => {
       lineOf.push(line);
     }
     const lines = line + 1;
+    const below = innerHeight + 240;    // further down: off screen until long after the cascade ends
     units.forEach((u, i) => {
+      if (tops[i] > below) return;
       u.animate(KEYS, { duration: LINE.duration, delay: startDelay + Math.min(lineOf[i] * LINE.stagger, LINE.maxStart), fill: "backwards" });
     });
     return startDelay + Math.min(Math.max(0, lines - 1) * LINE.stagger, LINE.maxStart);
@@ -386,7 +389,8 @@ const Word = (() => {
       tail.style.height = `${18 - 10 * c}px`;
       wordEl.style.transform = `scale(${((1 - 0.28 * c) * pop).toFixed(4)})`;
     };
-    const onScroll = () => fold();
+    let foldQueued = false;            // one fold per frame, however many scroll events
+    const onScroll = () => { if (!foldQueued) { foldQueued = true; requestAnimationFrame(() => { foldQueued = false; fold(); }); } };
     addEventListener("scroll", onScroll, { passive: true });
     fold();
 

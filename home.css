@@ -14,12 +14,14 @@
   background-image: linear-gradient(to bottom right,
     transparent 36%, rgba(255,255,255, calc(var(--s) * 0.4)) 43%, rgba(255,255,255, var(--s)) 50%,
     rgba(255,255,255, calc(var(--s) * 0.4)) 57%, transparent 64%);
-  background-size: 300% 300%; background-repeat: no-repeat;
-  animation: sheen 8.5s linear infinite;
+  background-size: 300% 300%; background-position: 50% 50%; background-repeat: no-repeat;
+  will-change: transform; animation: sheen 8.5s linear infinite;
 }
 .sheen.soft::before { --s: 0.07; }
 .sheen > * { position: relative; z-index: 1; }
-@keyframes sheen { 0% { background-position: 100% 100%; } 45%, 100% { background-position: 0% 0%; } }
+/* The glow band sits in the middle of a card-sized layer that slides corner to corner
+   (a moved layer, not a repainted gradient: no paint work while it runs). */
+@keyframes sheen { 0% { transform: translate3d(-100%, -100%, 0); } 45%, 100% { transform: translate3d(100%, 100%, 0); } }
 
 /* The flowing wordmark: a closed 17-colour wheel repeating end to end, moving
    one way forever — one turn every 17 s (shared clock: see Motion.syncFlow). */

@@ -153,8 +153,7 @@ details.sec .prose { padding-top: 0; }
 .mix b { font: 600 17px Outfit, sans-serif; }
 .mix span { color: var(--muted); font-size: 15px; }
 .tray { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + var(--bottom)); z-index: 9;
-  display: flex; gap: 6px; padding: 6px 10px; border-radius: 40px; background: rgba(34,42,48,.92);
-  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.08); }
+  display: flex; gap: 6px; padding: 6px 10px; border-radius: 40px; background: rgba(34,42,48,.97); border: 1px solid rgba(255,255,255,.08); }
 .tray .icon-btn { width: 52px; height: 52px; color: var(--ink); }
 .tray .icon-btn.on { color: #F2C35B; }
 .word-page { padding-bottom: 110px; }
