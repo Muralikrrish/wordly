@@ -113,11 +113,16 @@ const Motion = (() => {
     el.style.opacity = Math.min(1, Math.max(0, t));
     el.style.transform = `translate3d(0, ${((1 - overshoot1(t)) * REVEAL.rise).toFixed(2)}px, 0)`;
   }
+  // Run by the browser's own animation engine (Web Animations), not a
+  // per-frame script: on iPhone it keeps going smoothly while the page is busy.
+  const REVEAL_KEYS = Array.from({ length: 15 }, (_, i) => {
+    const t = i / 14;
+    return { opacity: t, transform: `translate3d(0, ${((1 - overshoot1(t)) * REVEAL.rise).toFixed(2)}px, 0)` };
+  });
   function revealNow(el, delay = 0, duration = REVEAL.duration) {
-    revealStyle(el, 0);
-    return new Promise((res) => tween({ duration, delay, update: (_, t) => revealStyle(el, t), done: () => {
-      el.style.opacity = ""; el.style.transform = ""; res();
-    } }));
+    el.style.opacity = ""; el.style.transform = "";
+    const a = el.animate(REVEAL_KEYS, { duration, delay, fill: "backwards" });
+    return a.finished.then(() => {}, () => {});
   }
 
   // Scroll direction, shared by every tracker: "scrolling down" means the page
@@ -236,14 +241,14 @@ const Motion = (() => {
       oldNode.style.zIndex = "30";
       oldNode.style.pointerEvents = "none";
       const h = innerHeight;
+      // The old screen leaves on the browser's animation engine (off the main thread).
       if (kind === "fromWord") {
-        tween({ duration: 340, easing: ease.fastOutSlowIn, update: (e) => {
-          oldNode.style.transformOrigin = `50% ${y + h / 2}px`;
-          oldNode.style.transform = `translate3d(0, ${(e * h / 12).toFixed(1)}px, 0) scale(${(1 - 0.08 * e).toFixed(4)})`;
-        } });
-        tween({ duration: 260, update: (e) => { oldNode.style.opacity = 1 - e; }, done: () => oldNode.remove() });
+        oldNode.style.transformOrigin = `50% ${y + h / 2}px`;
+        oldNode.animate([{ transform: "translate3d(0, 0, 0) scale(1)" }, { transform: `translate3d(0, ${(h / 12).toFixed(1)}px, 0) scale(0.92)` }],
+          { duration: 340, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" });
+        oldNode.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, fill: "forwards" }).onfinish = () => oldNode.remove();
       } else {
-        tween({ duration: kind === "toWord" ? 200 : 180, update: (e) => { oldNode.style.opacity = 1 - e; }, done: () => oldNode.remove() });
+        oldNode.animate([{ opacity: 1 }, { opacity: 0 }], { duration: kind === "toWord" ? 200 : 180, fill: "forwards" }).onfinish = () => oldNode.remove();
       }
     }
     if (kind === "fromWord") {
