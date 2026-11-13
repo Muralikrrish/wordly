@@ -20,6 +20,18 @@
 .wp-body { padding-bottom: 0; }
 .wp-body .top-space { height: 18px; }
 
+/* The say-it line (Pronounce.kt SayItLine): speaker + PEN-i-tuhns, tap to hear. */
+.sayit { display: inline-flex; align-items: center; gap: 10px; margin: -8px 0 8px max(0px, calc(var(--read-margin) - 10px));
+  padding: 6px 10px; border-radius: 999px; font: 400 calc(var(--read-size) * 0.9) Outfit, sans-serif; letter-spacing: 0.4px;
+  color: rgba(var(--ink-rgb), .7); cursor: pointer; }
+.sayit:active { background: rgba(var(--ink-rgb), .06); }
+.sayit .spk { width: calc(var(--read-size) * 1.08); height: calc(var(--read-size) * 1.08); flex: none; color: var(--acc); }
+.sayit b { font-weight: 600; color: var(--ink); }
+.sayit i { font-style: normal; opacity: .5; }
+.sayit.talk .w1 { animation: sayw 700ms linear infinite; }
+.sayit.talk .w2 { animation: sayw 700ms linear -525ms infinite; }
+@keyframes sayw { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
 /* Definition text in the reader's font (Literata 17.5 by default). Paragraph
    gap = size × 0.4; list items 7 dp apart; headings h1–h6 at the app's sizes. */
 .dprose { padding: 0 var(--read-margin); font-family: var(--read-font); font-size: var(--read-size); line-height: var(--read-lh);

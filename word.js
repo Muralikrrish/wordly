@@ -118,6 +118,14 @@ const Word = (() => {
     setSpeech(true, false);
     speechSynthesis.speak(u);
   }
+  // The say-it line's speaker (Pronounce.kt SpeakerGlyph): a cone and two
+  // sound waves that pulse in turn while the word is spoken.
+  const SPEAKER = `<svg class="spk" viewBox="0 0 20 20" aria-hidden="true"><path d="M1.2 7.4H5.2L10 3.4V16.6L5.2 12.6H1.2Z" fill="currentColor"/>
+    <path class="w1" d="M12.28 7.47A3.4 3.4 0 0 1 12.28 12.53" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    <path class="w2" d="M14.42 5.09A6.6 6.6 0 0 1 14.42 14.91" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
+  // PEN-i-tuhns: the stressed (capital) syllable bold, the rest softer, the hyphens softest.
+  const sayItHtml = (pron) => pron.split(/([-\s]+)/).filter(Boolean)
+    .map((p) => (/^[-\s]+$/.test(p) ? `<i>${esc(p)}</i>` : /[A-Z]/.test(p) ? `<b>${esc(p)}</b>` : `<span>${esc(p)}</span>`)).join("");
   function equalizer(svg) {
     const bars = [...svg.querySelectorAll("rect")];
     const REST = [0.55, 0.9, 0.45, 0.72];
@@ -436,19 +444,31 @@ const Word = (() => {
     const bodyIn = view.querySelector(".body-in");
     if (!bodyIn) return;
     if (!def) { bodyIn.innerHTML = `<div class="empty">Couldn't load this word. Check your connection and try again.</div>`; return; }
-    const [intro, sections] = def;
+    const [intro, sections, pron] = def;
     const ex = (await exP) || { stories: {}, mixups: [], families: [] };
     const story = ex.stories[id];
     const mixes = ex.mixups.filter((m) => m.items.some(([eid]) => eid === id));
     const fams = ex.families.filter((f) => f.items.includes(id));
     const hasAfter = story || mixes.length || fams.length;
-    bodyIn.innerHTML = `${intro ? `<div class="dprose intro">${intro}</div><div style="height:${(Settings.paraGap() + 18).toFixed(1)}px"></div>` : ""}
+    bodyIn.innerHTML = `${pron ? `<div class="sayit" role="button" aria-label="Hear the word">${SPEAKER}<span class="sp">${sayItHtml(pron)}</span></div>` : ""}${intro ? `<div class="dprose intro">${intro}</div><div style="height:${(Settings.paraGap() + 18).toFixed(1)}px"></div>` : ""}
       ${hasAfter ? `<div class="after">${story ? storyCard(story) : ""}${mixCard(mixes, id)}${familyCards(fams, id)}</div><div style="height:22px"></div>` : ""}
       <div class="secs">${sections.map(([h], i) => `<div class="sec2" data-i="${i}"><div class="shd" data-press="0.975"><span class="abar"></span>
         <span class="title">${esc(h)}</span><span class="chev">${CHEV}</span></div><div class="body"></div></div>`).join("")}</div>
       <div class="dfoot"><div class="orn"><i></i><b></b><i></i></div><br>
         <span class="holder"><span class="ring"></span><span class="bnc" style="display:inline-block"><span class="pill" data-press="0.95">${icon("ic_shuffle")}Surprise me</span></span></span></div>
       <div class="wp-clear"></div>`;
+
+    // How to say it: tap to hear; the waves pulse while the word is spoken.
+    const say = bodyIn.querySelector(".sayit");
+    if (say) {
+      say.addEventListener("click", () => { speak(e.word); if (navigator.vibrate) navigator.vibrate(8); });
+      const talk = () => say.classList.toggle("talk", speech.preparing || speech.speaking);
+      speech.listeners.add(talk);
+      const done = view.cleanup;
+      view.cleanup = () => { speech.listeners.delete(talk); done(); };
+      if (animate) say.animate([{ opacity: 0, transform: "translate3d(0, 8px, 0)" }, { opacity: 1, transform: "none" }],
+        { duration: 420, delay: 60, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "backwards" });
+    }
 
     // The cascade: the opening's lines, then the cards, then each section card.
     if (animate) {
