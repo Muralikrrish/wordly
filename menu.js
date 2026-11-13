@@ -71,7 +71,7 @@ const Menu = (() => {
     const p = h.split("?")[0].split("/").filter(Boolean);
     if (!p.length || p[0] === "search") return "home";
     return { quiz: "quiz", collections: "collections", section: "collections", collection: "collections", families: "families", family: "families",
-      lists: p[1] === "recent" ? "recent" : "lists", settings: "settings", more: "more", about: "more", privacy: "more" }[p[0]] || "";
+      lists: p[1] === "recent" ? "recent" : "lists", settings: "settings", more: "more", about: "more", privacy: "more", say: "more" }[p[0]] || "";
   }
   function open() {
     if (!drawer) build();
@@ -118,6 +118,8 @@ const Menu = (() => {
   function morePage(view) {
     const { tileHtml, wireTiles, subBar, wireBack } = Settings;
     view.innerHTML = subBar("More") + `<div class="sgroup" style="margin-top:12px">
+      ${tileHtml({ title: "Pronunciation guide", subtitle: "How to read PEN-i-tuhns", icon: Word.SPEAKER.replace('class="spk"', 'class="spk" width="21" height="21"'), seed: 5, act: "say" })}</div>
+      <div class="sgroup" style="margin-top:16px">
       ${tileHtml({ title: "Feedback", icon: ic(ICONS.ic_mail, 21), seed: 1, act: "feedback" })}
       ${tileHtml({ title: "Rate this app", icon: ic(I.star, 21), seed: 6, act: "rate" })}
       ${tileHtml({ title: "Share this app", icon: ic(ICONS.ic_share, 21), seed: 9, act: "share" })}
@@ -125,6 +127,7 @@ const Menu = (() => {
     wireBack(view);
     wireTiles(view, (a) => {
       if (a === "about") return go("#/about");
+      if (a === "say") return go("#/say");
       if (a === "rate") return void open_(PLAY_LINK);
       if (a === "share") {
         const text = `Check out Wordly, a dictionary and vocabulary builder that explains words clearly:\n${WEB_LINK()}`;
@@ -173,6 +176,51 @@ const Menu = (() => {
     view.innerHTML = Settings.subBar("Privacy policy") + `<div class="priv"><div class="pupd">Last updated: 5 November 2026</div>
       ${PRIVACY.map(([h, b]) => `${h ? `<h3>${esc(h)}</h3>` : `<div style="height:12px"></div>`}<p>${esc(b)}</p>`).join("")}<div style="height:36px"></div></div>`;
     Settings.wireBack(view);
+  }
+
+  // ---- Pronunciation guide (SayGuideScreen) ---------------------------------------------
+  // [spelled, as in, a Wordly word that has it, its say-it spelling] — tap a row to hear it.
+  const VOWELS = [["a", "as in cat", "Abstract", "AB-strakt"], ["ay", "as in say", "Vindicate", "VIN-di-kayt"],
+    ["ah", "as in father", "Facade", "fuh-SAHD"], ["o", "as in hot", "Jocular", "JOK-yuh-lur"], ["aw", "as in law", "Laud", "LAWD"],
+    ["e", "as in bed", "Penitence", "PEN-i-tuhns"], ["ee", "as in see", "Serene", "suh-REEN"], ["i", "as in sit", "Ephemeral", "i-FEM-uh-ruhl"],
+    ["y", "as in fly", "Indict", "in-DYT"], ["eye", "the same sound, on its own", "Irony", "EYE-ruh-nee"], ["oh", "as in go", "Morose", "muh-ROHS"],
+    ["oo", "as in food", "Lucid", "LOO-sid"], ["uu", "as in book", "Pulpit", "PUUL-pit"], ["uh", "as in cup, and the soft sound in about", "Hyperbole", "hy-PUR-buh-lee"],
+    ["ow", "as in cow", "Renown", "ri-NOWN"], ["oy", "as in boy", "Turmoil", "TUR-moyl"], ["yoo", "as in cute", "Mutiny", "MYOO-tn-ee"]];
+  const R_VOWELS = [["ur", "as in her", "Colonel", "KUR-nuhl"], ["ar", "as in car", "Larceny", "LAR-suh-nee"], ["or", "as in for", "Ornate", "or-NAYT"],
+    ["air", "as in care", "Nefarious", "ni-FAIR-ee-uhs"], ["eer", "as in here", "Austere", "aw-STEER"]];
+  const CONSONANTS = [["g", "always hard, as in go", "Gregarious", "gri-GAIR-ee-uhs"], ["j", "as in jam, and a soft g", "Gist", "JIST"],
+    ["k", "as in kite, and a hard c", "Chaos", "KAY-os"], ["s", "always as in see", "Lucid", "LOO-sid"], ["z", "as in zoo, and an s that buzzes", "Raze", "RAYZ"],
+    ["ch", "as in chin", "Chide", "CHYD"], ["sh", "as in shoe", "Chicanery", "shi-KAY-nuh-ree"], ["zh", "as in the middle of measure", "Genre", "ZHAHN-ruh"],
+    ["th", "as in think", "Ethos", "EE-thos"], ["ng", "as in sing", "Harangue", "huh-RANG"], ["y", "before a vowel, as in yes", "Lanyard", "LAN-yurd"],
+    ["kw", "as in queen", "Quixotic", "kwik-SOT-ik"], ["ks", "as in box", "Taxonomy", "tak-SON-uh-mee"]];
+  const RULES = [["The hyphens split a word into its beats.", "PEN · i · tuhns is three beats."],
+    ["The beat in capitals is the one you say loudest.", "PEN-i-tuhns, not pen-I-tuhns."],
+    ["Each sound is always spelled the same way.", "Learn the sounds below once, and you can read every word. The sounds are American English."]];
+  const NOTES = [["A beat with no vowel", "A lone l or n, as in MET-l (mettle) or LAYD-n (laden), is a quick beat you say with almost no vowel, like the end of little or kitten."],
+    ["Same spelling, different sound", "Some words change with their job. Intimate is IN-tuh-mit when it describes something and IN-tuh-mayt when it means to hint. Each one shows its own."],
+    ["Two ways to say it", "A few words are said two ways, shown with “or”: Peaked is PEEKT (pointed) or PEE-kid (looking pale and unwell)."],
+    ["Words and phrases", "Single words get a pronunciation. Idioms and longer phrases are made of everyday words, so they don't need one."]];
+  function sayGuidePage(view) {
+    const card = (rows) => `<div class="sgcard">${rows.map(([s, as, w, p]) => `<div class="sgrow" role="button" data-w="${esc(w)}" aria-label="Hear ${esc(w)}">
+      <span class="sgchip">${esc(s)}</span><span class="sgtx"><span class="sgas">${esc(as)}</span><span class="sgex"><span class="sgw">${esc(w)}</span><span class="sayt">${Word.sayItHtml(p)}</span></span></span>${Word.SPEAKER}</div>`).join("")}</div>`;
+    view.innerHTML = Settings.subBar("Pronunciation guide") + `<div class="sg">
+      <div class="sghero"><p>Every word starts with how to say it, spelled the way it sounds. Tap it to hear the word.</p>
+        <div class="sgline" role="button" data-w="Penitence" aria-label="Hear Penitence">${Word.SPEAKER}<span class="sayt">${Word.sayItHtml("PEN-i-tuhns")}</span></div><small>Penitence</small></div>
+      <h3>Three simple rules</h3>${RULES.map(([t, b], i) => `<div class="sgrule"><span class="sgn">${i + 1}</span><span><b>${esc(t)}</b><small>${esc(b)}</small></span></div>`).join("")}
+      <h3>Vowel sounds</h3>${card(VOWELS)}<h3>Vowels with an r</h3>${card(R_VOWELS)}
+      <h3>Consonants worth knowing</h3><p class="sgp">Most consonants sound just as they look. These are the ones to know:</p>${card(CONSONANTS)}
+      <h3>Good to know</h3>${NOTES.map(([t, b]) => `<div class="sgnote"><b>${esc(t)}</b><p>${esc(b)}</p></div>`).join("")}<div style="height:40px"></div></div>`;
+    Settings.wireBack(view);
+    // Only the row just tapped shows its waves moving.
+    let playing = null;
+    const show = () => view.querySelectorAll("[data-w]").forEach((el) => el.classList.toggle("talk", el === playing && (Word.speech.preparing || Word.speech.speaking)));
+    Word.speech.listeners.add(show);
+    view.cleanup = () => Word.speech.listeners.delete(show);
+    view.querySelectorAll("[data-w]").forEach((el) => el.addEventListener("click", () => {
+      playing = el;
+      Word.speak(el.dataset.w);
+      if (navigator.vibrate) navigator.vibrate(8);
+    }));
   }
 
   // ---- the share picture's preview (SharePreviewSheet) -----------------------------------
@@ -364,5 +412,5 @@ const Menu = (() => {
   }
   const shareWord = (entry, seed) => preview(`Share “${entry.word}”`, wordCard(entry, seed));
 
-  return { open, close, isOpen, morePage, aboutPage, privacyPage, preview, shareWord };
+  return { open, close, isOpen, morePage, aboutPage, privacyPage, sayGuidePage, preview, shareWord };
 })();

@@ -156,3 +156,35 @@
 .lkpill b { font: 600 15px Outfit, sans-serif; color: var(--ink); }
 .lkpill small { font: 400 12.5px Inter, sans-serif; color: var(--accent); }
 .lkpad { padding: 6px 12px 0; }
+
+/* Pronunciation guide (SayGuideScreen). */
+.sg { padding: 0 20px; }
+.sg h3 { margin: 0; padding: 28px 0 12px; font: 600 18px Outfit, sans-serif; color: var(--ink); }
+.sghero { margin-top: 8px; border-radius: 22px; background: var(--container); padding: 18px; }
+.sghero p { margin: 0 0 12px; font: 400 15.5px/23px Outfit, sans-serif; color: var(--muted); }
+.sgline { display: inline-flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 16px; background: var(--bg); cursor: pointer; font: 400 20px Outfit, sans-serif; letter-spacing: .4px; }
+.sgline .spk { width: 24px; height: 24px; color: var(--accent); }
+.sghero small { display: block; margin: 8px 0 0 6px; font: 400 13px Outfit, sans-serif; color: var(--muted); }
+.sgrule { display: flex; gap: 14px; padding-bottom: 14px; }
+.sgn { width: 30px; height: 30px; flex: none; border-radius: 50%; background: rgba(var(--accent-rgb), .14); color: var(--accent); display: grid; place-items: center; font: 600 15px Outfit, sans-serif; }
+.sgrule b { display: block; font: 500 16px/22px Outfit, sans-serif; color: var(--ink); }
+.sgrule small { display: block; margin-top: 2px; font: 400 15px/22px Outfit, sans-serif; color: var(--muted); }
+.sgcard { border-radius: 22px; background: var(--container); overflow: hidden; }
+.sgrow { display: flex; align-items: center; gap: 14px; padding: 12px 14px; cursor: pointer; position: relative; }
+.sgrow + .sgrow::before { content: ""; position: absolute; top: 0; left: 84px; right: 0; height: 1px; background: rgba(var(--ink-rgb), .06); }
+.sgrow:active { background: rgba(var(--ink-rgb), .05); }
+.sgchip { min-width: 56px; flex: none; text-align: center; padding: 8px; border-radius: 12px; background: rgba(var(--accent-rgb), .12); color: var(--accent); font: 600 18px Outfit, sans-serif; }
+.sgtx { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sgas { font: 400 15.5px/21px Outfit, sans-serif; color: var(--ink); }
+.sgex { font: 400 14.5px/20px Outfit, sans-serif; letter-spacing: .3px; }
+.sgw { color: var(--muted); margin-right: 10px; }
+.sgrow .spk { width: 18px; height: 18px; flex: none; color: rgba(var(--muted-rgb), .7); }
+.sgp { margin: 0 0 10px; font: 400 15px/22px Outfit, sans-serif; color: var(--muted); }
+.sgnote { padding-bottom: 16px; }
+.sgnote b { font: 500 16px Outfit, sans-serif; color: var(--ink); }
+.sgnote p { margin: 3px 0 0; font: 400 15px/22px Outfit, sans-serif; color: var(--muted); }
+.sayt { color: rgba(var(--ink-rgb), .7); }
+.sayt b { font-weight: 600; color: var(--ink); }
+.sayt i { font-style: normal; opacity: .5; }
+.sg .talk .w1 { animation: sayw 700ms linear infinite; }
+.sg .talk .w2 { animation: sayw 700ms linear -525ms infinite; }

@@ -125,7 +125,7 @@ const Word = (() => {
     <path class="w2" d="M14.42 5.09A6.6 6.6 0 0 1 14.42 14.91" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
   // PEN-i-tuhns: the stressed (capital) syllable bold, the rest softer, the hyphens softest.
   const sayItHtml = (pron) => pron.split(/([-\s]+)/).filter(Boolean)
-    .map((p) => (/^[-\s]+$/.test(p) ? `<i>${esc(p)}</i>` : /[A-Z]/.test(p) ? `<b>${esc(p)}</b>` : `<span>${esc(p)}</span>`)).join("");
+    .map((p) => (/^[-\s]+$/.test(p) || p === "or" ? `<i>${esc(p)}</i>` : /[A-Z]/.test(p) ? `<b>${esc(p)}</b>` : `<span>${esc(p)}</span>`)).join("");
   function equalizer(svg) {
     const bars = [...svg.querySelectorAll("rect")];
     const REST = [0.55, 0.9, 0.45, 0.72];
@@ -582,5 +582,5 @@ const Word = (() => {
     });
   }
 
-  return { render, speak };
+  return { render, speak, speech, SPEAKER, sayItHtml };
 })();

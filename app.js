@@ -532,6 +532,7 @@ async function route() {
     case "more": Menu.morePage($view); break;
     case "about": Menu.aboutPage($view); break;
     case "privacy": Menu.privacyPage($view); break;
+    case "say": Menu.sayGuidePage($view); break;
     case "quiz": await (parts[1] === "play" ? Quiz.playPage($view, { returning })
       : parts[1] === "words" ? Quiz.wordsPage($view, params.get("tab")) : Quiz.hubPage($view)); break;
     default: await home($view);
