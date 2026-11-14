@@ -262,3 +262,21 @@
 .dteaser .tb { display: flex; gap: 4px; margin-top: 12px; }
 .dteaser .tb i { flex: 0 1 26px; min-width: 8px; aspect-ratio: 1 / 1.2; border-radius: 6px; background: rgba(255,255,255,.2); }
 .dteaser .tb i.sp { flex: 0 1 13px; background: none; }
+
+/* An unanswered typed question: one fixed screen, Wordly's keyboard at the bottom. */
+.qpage.typing { overflow: hidden; }
+.qpage.typing .qin { min-height: 100%; display: flex; flex-direction: column; }
+.qpage.typing .qin > div[style*="height:87px"] { display: none; }
+.qpage.typing .tpts { margin-bottom: 0; }
+.qkeys { margin: auto -14px 0; padding: 12px 4px max(6px, var(--bottom)); display: flex; flex-direction: column; gap: 8px; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.qkeys .kr { display: flex; gap: 6px; }
+.qkeys .half { flex: 0.5; }
+.qkeys .wide { flex: 1.5; }
+.qkey { flex: 1; height: 46px; border-radius: 10px; display: grid; place-items: center; padding: 0;
+  background: color-mix(in srgb, var(--surface) 35%, #fff); box-shadow: 0 1px 2px rgba(0,0,0,.12);
+  font: 500 19px Outfit, sans-serif; color: var(--ink); -webkit-tap-highlight-color: transparent; }
+[data-theme="dark"] .qkey { background: color-mix(in srgb, var(--container) 94%, #fff); box-shadow: none; }
+.qkey.soft { background: var(--surface); box-shadow: none; }
+.qkey:active { background: rgba(var(--accent-rgb), .18); }
+.qcheck { margin: 0 2px; height: 46px; border-radius: 14px; background: var(--accent); color: var(--on-accent); font: 600 16px Outfit, sans-serif; }
+.qcheck:disabled { background: rgba(var(--ink-rgb), .06); color: rgba(var(--muted-rgb), .6); }

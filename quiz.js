@@ -371,6 +371,7 @@ const Quiz = (() => {
   // (Play, Next question) can raise the iPhone keyboard straight away: no
   // capitals, no autocorrect, no suggestions, never offered to password managers.
   let kb = null;
+  const BACKSPACE = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M9 5.5h10.5a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-6-6.5z"/><path d="M11.5 9.5l5 5M16.5 9.5l-5 5"/></svg>';
   function field() {
     if (kb) return kb;
     kb = document.createElement("input");
@@ -381,7 +382,8 @@ const Quiz = (() => {
     document.body.appendChild(kb);
     return kb;
   }
-  const raiseKeyboard = () => { const f = field(); f.value = ""; f.focus({ preventScroll: true }); };
+  // The quiz has its own on-page keyboard now, so the iPhone keyboard is never raised.
+  const raiseKeyboard = () => {};
 
   // ---- the home banner (ChallengeBanner) --------------------------------------
   function banner() {
@@ -763,7 +765,6 @@ const Quiz = (() => {
       const nx = revealed();
       typed = [...Array(n).keys()].filter((i) => !nx.has(i)).map((i) => before[i]).filter((c) => c != null).join("");
       if (clues() === 1) almost = false;
-      if (kb) kb.value = typed;
       paint();
     }
     const onInput = () => {
@@ -774,19 +775,49 @@ const Quiz = (() => {
       paint();
     };
     const onKey = (e) => { if (e.key === "Enter" && session() === s && s.index === idx && pick() == null) { e.preventDefault(); check(); } };
-    // Only the question on screen listens to the field.
-    if (answered0) { /* a question answered already never takes typing */ }
-    else {
+    // Typing: Wordly's keys on the page, or a computer keyboard.
+    const live = () => pick() == null && session() === s && s.index === idx;
+    const press = (c) => { if (!live() || typed.length >= free().length) return; typed += c.toLowerCase(); almost = false; paint(); };
+    const del = () => { if (!live() || !typed) return; typed = typed.slice(0, -1); almost = false; paint(); };
+    const onDocKey = (e) => {
+      if (!live() || e.ctrlKey || e.metaKey || e.altKey || document.querySelector(".pover, .sheetover")) return;
+      if (e.key === "Enter") { e.preventDefault(); check(); }
+      else if (e.key === "Backspace") { e.preventDefault(); del(); }
+      else if (/^[a-zA-Z'-]$/.test(e.key)) { e.preventDefault(); press(e.key); }
+    };
+    if (!answered0) {
       detachInput();
-      field().addEventListener("input", onInput);
-      kb.addEventListener("keydown", onKey);
-      detachInput = () => { kb.removeEventListener("input", onInput); kb.removeEventListener("keydown", onKey); detachInput = () => {}; };
+      addEventListener("keydown", onDocKey);
+      detachInput = () => { removeEventListener("keydown", onDocKey); detachInput = () => {}; };
     }
 
-    host.innerHTML = `<div class="tiles" data-tap></div><div class="tmsg"></div><div class="tpills"></div><div class="tpts"></div>`;
+    host.innerHTML = `<div class="tiles"></div><div class="tmsg"></div><div class="tpills"></div><div class="tpts"></div>`;
     const tilesEl = host.querySelector(".tiles");
-    tilesEl.addEventListener("mousedown", (e) => e.preventDefault());
-    tilesEl.addEventListener("click", () => { if (pick() == null) { kb.focus({ preventScroll: true }); kb.value = typed; } });
+    // Wordly's keyboard (QuizKeyboard), pinned to the bottom of the page.
+    const pg = host.closest(".qpage");
+    let keysEl = null;
+    if (!answered0 && pg) {
+      const extra = [...new Set([...answer].filter((c) => c === "-" || c === "'"))];
+      const row = (letters) => [...letters].map((c) => `<button class="qkey" data-k="${c}">${c.toUpperCase()}</button>`).join("");
+      keysEl = document.createElement("div");
+      keysEl.className = "qkeys";
+      keysEl.innerHTML = `<div class="kr">${row("qwertyuiop")}</div>
+        <div class="kr"><i class="half"></i>${row("asdfghjkl")}<i class="half"></i></div>
+        <div class="kr">${extra.length ? extra.map((c) => `<button class="qkey soft" style="flex:${1.5 / extra.length}" data-k="${c === "'" ? "&#39;" : c}">${c === "'" ? "&#39;" : c}</button>`).join("") : '<i class="wide"></i>'}${row("zxcvbnm")}<button class="qkey soft wide" data-del aria-label="Delete">${BACKSPACE}</button></div>
+        <button class="qcheck" data-check disabled>Check</button>`;
+      pg.querySelector(".qin").appendChild(keysEl);
+      pg.classList.add("typing");
+      const tap = (b) => { if (navigator.vibrate) navigator.vibrate(5); b.animate([{ transform: "scale(.92)" }, { transform: "scale(1)" }], { duration: 160, easing: "cubic-bezier(.2,.9,.3,1.2)" }); };
+      keysEl.addEventListener("pointerdown", (e) => e.preventDefault());
+      keysEl.addEventListener("click", (e) => {
+        const b = e.target.closest("button");
+        if (!b) return;
+        tap(b);
+        if (b.dataset.k) press(b.dataset.k);
+        else if (b.hasAttribute("data-del")) del();
+        else if (b.hasAttribute("data-check")) check();
+      });
+    }
     function paint() {
       const answered = pick() != null, solved = answered && isCorrect(pick());
       const W = (host.clientWidth || Math.min(innerWidth, 640) - 40);
@@ -811,24 +842,36 @@ const Quiz = (() => {
       msg.innerHTML = !answered && almost ? `<div class="almost">Almost: check your spelling and try again.</div>`
         : typedWrong ? `<div class="youtyped">You typed “${esc(s.typed[idx])}”</div>` : "";
       const pills = host.querySelector(".tpills"), pts = host.querySelector(".tpts");
-      if (answered) { pills.innerHTML = ""; pts.innerHTML = ""; return; }
+      if (answered) {
+        pills.innerHTML = ""; pts.innerHTML = "";
+        if (keysEl) { keysEl.remove(); keysEl = null; pg && pg.classList.remove("typing"); }
+        return;
+      }
       const c = clues();
-      pills.innerHTML = `<button class="bpill" data-press="0.94" data-hint>${c === 0 ? "Show the first letter" : c === 1 ? "Show the last letter" : "Reveal the word"}</button>
-        ${e.every((x) => x != null) ? `<button class="bpill" data-press="0.94" data-submit>Submit</button>` : ""}`;
-      pills.querySelectorAll("button").forEach((b) => b.addEventListener("mousedown", (ev) => ev.preventDefault()));
+      pills.innerHTML = `<button class="bpill" data-press="0.94" data-hint>${c === 0 ? "Show the first letter" : c === 1 ? "Show the last letter" : "Reveal the word"}</button>`;
       pills.querySelector("[data-hint]").onclick = () => {
-        if (c >= LADDER_HINTS) { s.typed[idx] = ""; onPick(RECALL_MISS); paint(); } else { clue(); kb.focus({ preventScroll: true }); }
+        if (c >= LADDER_HINTS) { s.typed[idx] = ""; onPick(RECALL_MISS); paint(); } else clue();
       };
-      const sb = pills.querySelector("[data-submit]");
-      if (sb) sb.onclick = () => check();
-      const [now, after] = c === 0 ? ["Solve it now: 3 points", "After the first letter: 2 points"]
-        : c === 1 ? ["Solve it now: 2 points", "After the last letter: 1 point"] : ["Solve it now: 1 point", "Reveal the word: no points"];
-      pts.innerHTML = `<div>${now}</div><div>${after}</div>`;
+      pts.textContent = c === 0 ? "3 points now  ·  2 after the first letter" : c === 1 ? "2 points now  ·  1 after the last letter" : "1 point now  ·  none if revealed";
+      if (keysEl) keysEl.querySelector("[data-check]").disabled = !e.every((x) => x != null);
+      fitClue();
+    }
+    // A long meaning shrinks (18 px down to 12) until the page fits without scrolling.
+    function fitClue() {
+      if (!pg || !pg.classList.contains("typing")) return;
+      const cl = pg.querySelector(".clue");
+      if (!cl) return;
+      let fs = 18;
+      cl.style.fontSize = ""; cl.style.lineHeight = "";
+      while (fs > 12 && pg.scrollHeight > pg.clientHeight + 1) {
+        fs -= 1;
+        cl.style.fontSize = fs + "px"; cl.style.lineHeight = Math.round(fs * 1.45) + "px";
+      }
     }
     paint();
     requestAnimationFrame(paint);              // once the page has its width
-    // While the keyboard is up, keep the whole answer area just above it.
-    const vv = window.visualViewport;
+    // (No iPhone keyboard any more, so nothing needs lifting.)
+    const vv = null;
     if (vv) {
       let t = null;
       const lift = () => {
