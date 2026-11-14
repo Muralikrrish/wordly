@@ -197,6 +197,9 @@ const Quiz = (() => {
       todayAnswered: all.length, todayRight: all.filter(([id, p]) => isCorrect(p)).length,
       todayMastered: [...new Set(answersOn(day).map(([id]) => id))].filter((id) => (progressOf(id)?.box ?? 0) >= MASTERED).length,
       practiceRound: bank ? practiceRound(day) : null,
+      // The Daily Challenge's next question, for the card's preview (only its
+      // clue and letter boxes are drawn).
+      next: !r && bank ? (dailyQuestions(day)[sessions[MODE_DAILY] ? sessions[MODE_DAILY].picks.length : dailyDraft(day).length] || null) : null,
     };
   }
   function openDaily() {
@@ -301,6 +304,19 @@ const Quiz = (() => {
   }
   const dayLabel = (day, fmt) => new Date(day * 86400000).toLocaleDateString(undefined, { timeZone: "UTC", ...fmt });
   const shortDate = (day) => dayLabel(day, { weekday: "short", month: "short", day: "numeric" });
+  // The Daily card's ten numbered tiles (shown instead of the pips when the
+  // Word Challenge page has room): right, missed, next, or still to come.
+  const dtiles = (count, pattern, answered, mid) => `<div class="dtiles">${Array.from({ length: count }, (_, i) => {
+    const done = pattern ? i < pattern.length : i < answered, ok = pattern && pattern[i] === "1", missed = pattern && pattern[i] === "0";
+    const next = !pattern && i === answered;
+    return `<span class="dt${missed ? " miss" : done ? " done" : ""}${next ? " next" : ""}" style="--mid:${mid}">${ok ? CHECK : missed ? CLOSE : i + 1}</span>`;
+  }).join("")}</div>`;
+  // The Daily card's taste of the game (ClueTeaser): "CLUE 3 OF 10", the next
+  // question's meaning and its letter boxes, on a frosted panel.
+  const teaser = (sum) => sum.next ? `<div class="dteaser"><div class="tk">WORD ${sum.dailyAnswered + 1} OF ${sum.dailySize}</div>
+    <div class="tc">“${esc(sum.next.clue)}”</div><div class="tb">${[...sum.next.text].map((c) => (c === " " ? '<i class="sp"></i>' : "<i></i>")).join("")}</div></div>` : "";
+  // Both forms are drawn; the page shows the tiles when the card is roomy.
+  const dpips = (count, pattern, answered, mid) => `<div class="dthin">${pips(count, pattern, answered, 8)}</div>${dtiles(count, pattern, answered, mid)}`;
   const pips = (count, pattern, answered, h, wrongAlpha = 0.22) => `<div class="qpips" style="--h:${h}px">${Array.from({ length: count }, (_, i) => {
     const on = pattern != null ? pattern[i] === "1" : i < answered;
     return `<i style="background:${on ? "#fff" : `rgba(255,255,255,${wrongAlpha})`}"></i>`;
@@ -374,10 +390,10 @@ const Quiz = (() => {
     const r = sum.dailyResult;
     return `<a class="banner sheen" data-press="0.98" href="#/quiz" style="background:${gradient(seed)}">
       <div class="top"><span class="bolt">${ic("ic_challenge", 18)}</span>
-        <span class="kick">DAILY CHALLENGE</span><span class="day">${esc(shortDate(sum.today))}</span></div>
+        <span class="kick">DAILY CHALLENGE</span></div>
       ${r ? `<div class="bscore"><b>${r.score}</b><span class="of"> / ${sum.dailySize}</span><span class="hl">${headline(r.score, sum.dailySize)}</span></div>`
-        : `<h3>${sum.dailyAnswered > 0 ? `${sum.dailyAnswered} of ${sum.dailySize} done` : "Name the word"}</h3>`}
-      <div class="sub">${r ? `Next challenge in ${untilMidnight()}` : sum.dailyAnswered > 0 ? "Your answers are saved. Pick up where you left off." : "Read the meaning, type the word. Fewer hints, more points."}</div>
+        : `<h3>${sum.dailyAnswered > 0 ? `${sum.dailyAnswered} of ${sum.dailySize} done` : "Guess today's word"}</h3>`}
+      <div class="sub">${r ? `Next challenge in ${untilMidnight()}` : sum.dailyAnswered > 0 ? "Your answers are saved. Pick up where you left off." : "Guess the word from its meaning, with a hint or two if needed."}</div>
       ${pips(sum.dailySize, r ? r.pattern : null, r ? r.pattern.length : sum.dailyAnswered, 7)}
       <div class="row">${r ? `${cardPill("Review", mid, true, { act: "review" })}<button class="rpill" data-press="0.9" data-act="retake" aria-label="Retake">${ic("ic_retake", 18)}</button>`
         : cardPill(sum.dailyAnswered > 0 ? "Resume" : "Play now", mid, true, { play: true, act: "play" })}
@@ -413,8 +429,17 @@ const Quiz = (() => {
         <div style="height:26px"></div>${practiceCard(sum)}<div style="height:26px"></div>${howItWorks()}`}</div>`;
     view.querySelector("[data-back]").onclick = () => history.back();
     if (!sum.total) return;
-    const first = view.querySelector(".qfirst");
-    const fit = () => { first.style.minHeight = `${innerHeight - view.querySelector(".subbar").offsetHeight - 4 - 12}px`; };
+    // The first screenful ends exactly at "See your words": spare height goes
+    // INTO the Daily card (its content centred, a big faint bolt in the
+    // corner), never as gaps between cards, so Practice is never half shown.
+    const first = view.querySelector(".qfirst"), daily = view.querySelector(".qdaily");
+    const fit = () => {
+      daily.style.minHeight = ""; daily.classList.remove("roomy");
+      const room = innerHeight - view.querySelector(".subbar").offsetHeight - 16 - (first.offsetHeight - daily.offsetHeight);
+      const extra = room - daily.offsetHeight;
+      if (extra > 0) daily.style.minHeight = room + "px";
+      daily.classList.toggle("roomy", extra > 100);
+    };
     fit(); addEventListener("resize", fit);
     view.cleanup = () => removeEventListener("resize", fit);
     [".qstreak", ".qdaily", ".qstats", ".qpractice", ".qhow"].forEach((c, i) => entrance(view.querySelector(c), [0, 70, 140, 200, 260][i]));
@@ -450,21 +475,21 @@ const Quiz = (() => {
     let body;
     if (r) {
       body = `<div class="dscore"><b>${r.score}</b><span class="of"> / ${sum.dailySize}</span><span class="hl">${headline(r.score, sum.dailySize)}</span></div>
-        <div style="height:10px"></div>${pips(r.pattern.length, r.pattern, r.pattern.length, 8)}<div style="height:16px"></div>
+        <div style="height:10px"></div>${dpips(r.pattern.length, r.pattern, r.pattern.length, mid)}<div style="height:16px"></div>
         <div class="prow">${cardPill("Share", mid, true, { icon: "ic_share", act: "share" })}${cardPill("Review answers", mid, false, { act: "review" })}</div>
         <div style="height:12px"></div><div class="hair"></div><div style="height:2px"></div>
         <div class="nrow"><span>Next challenge in ${untilMidnight()}</span><button class="tlink" data-press="0.92" data-act="retake">${ic("ic_retake", 16)}Retake</button></div>`;
     } else if (sum.dailyAnswered > 0) {
       body = `<div class="big">${sum.dailyAnswered} of ${sum.dailySize} done</div><div class="dsub">Your answers are saved. Pick up right where you left off.</div>
-        <div style="height:18px"></div>${pips(sum.dailySize, null, sum.dailyAnswered, 8)}<div style="height:20px"></div>
+        <div style="height:18px"></div>${sum.next ? `<div class="dthin">${pips(sum.dailySize, null, sum.dailyAnswered, 8)}</div>${teaser(sum)}` : dpips(sum.dailySize, null, sum.dailyAnswered, mid)}<div style="height:20px"></div>
         <div class="prow">${cardPill("Resume", mid, true, { play: true, act: "play" })}</div>`;
     } else {
-      body = `<div class="big">Name the word</div><div class="dsub">Read the meaning, type the word. Fewer hints, more points.</div>
-        <div style="height:18px"></div>${pips(sum.dailySize, null, 0, 8)}<div style="height:20px"></div>
+      body = `<div class="big">Guess today's word</div><div class="dsub">Guess the word from its meaning, with a hint or two if needed.</div>
+        <div style="height:18px"></div>${sum.next ? `<div class="dthin">${pips(sum.dailySize, null, 0, 8)}</div>${teaser(sum)}` : dpips(sum.dailySize, null, 0, mid)}<div style="height:20px"></div>
         <div class="prow">${cardPill("Play", mid, true, { play: true, act: "play" })}<span class="aside">About 5 minutes</span></div>`;
     }
     return `<div class="qdaily qgcard sheen" data-press="0.98" data-act="play" style="background:${gradient(seed)}">
-      <div class="ghead"><span class="gk">DAILY CHALLENGE</span><span class="gd">${esc(shortDate(sum.today))}</span></div><div style="height:18px"></div>${body}</div>`;
+      <div class="ghead"><span class="gk">DAILY CHALLENGE</span><span class="gd">${esc(shortDate(sum.today))}</span></div><div class="dbody"><div style="height:18px"></div>${body}</div></div>`;
   }
   // Palette.practice(day): a new hue daily, never the challenge's family nor the Word of the Day's.
   function practiceSeed(day) {

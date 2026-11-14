@@ -12,6 +12,7 @@ const Menu = (() => {
     settings: P("M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"),
     info: P("M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"),
     check: P("M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"),
+    search: P("M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"),
     star: P("M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"),
   };
   const ic = (svg, size = 24) => `<span class="ico" style="width:${size}px;height:${size}px">${svg}</span>`;
@@ -27,20 +28,25 @@ const Menu = (() => {
   function build() {
     scrim = document.createElement("div"); scrim.className = "dscrim";
     drawer = document.createElement("nav"); drawer.className = "drawer"; drawer.setAttribute("aria-label", "Menu");
-    const item = (key, label, icon, href) => `<a class="ditem" data-key="${key}" href="${href}">${icon}<span>${label}</span></a>`;
-    drawer.innerHTML = `<div class="dhead"><span class="ddisc">${LOGO}</span><span class="wm dwm">Wordly</span></div>
-      ${item("home", "Dictionary", `<span class="ico dlogo">${LOGO}</span>`, "#/")}
-      ${item("wotd", "Word of the day", ic(I.date), "#wotd")}
-      ${item("quiz", "Word challenge", ic(ICONS.ic_challenge), "#/quiz")}
-      ${item("collections", "Collections", ic(ICONS.ic_collections), "#/collections")}
-      ${item("families", "Word families", ic(ICONS.ic_col_root), "#/families")}
+    // Each item: its own colour tile (the app's palette), the label, and for
+    // Review the count of words due.
+    const item = (key, label, icon, href, seed) => {
+      const [a, b] = PALETTE[seed];
+      return `<a class="ditem" data-key="${key}" href="${href}"><span class="dtile" style="background:linear-gradient(135deg, ${a}, ${b})">${icon}</span><span class="dlab">${label}</span>${key === "review" ? '<span class="dbadge"></span>' : ""}</a>`;
+    };
+    drawer.innerHTML = `<div class="dhead"><span class="ddisc">${LOGO}</span><span class="dname"><span class="wm dwm">Wordly</span><small>Words, truly explained</small></span></div>
+      ${item("home", "Dictionary", ic(I.search, 20), "#/", 0)}
+      ${item("wotd", "Word of the day", ic(I.date, 20), "#wotd", 1)}
+      ${item("quiz", "Word challenge", ic(ICONS.ic_challenge, 20), "#/quiz", 3)}
+      ${item("collections", "Collections", ic(ICONS.ic_collections, 20), "#/collections", 6)}
+      ${item("families", "Word families", ic(ICONS.ic_col_root, 20), "#/families", 9)}
       <hr class="ddiv">
-      ${item("review", "Review", ic(I.check), "#/review")}
-      ${item("recent", "Recent", ic(I.refresh), "#/lists/recent")}
-      ${item("lists", "My lists", ic(ICONS.ic_bookmark_outline), "#/lists/saved")}
+      ${item("review", "Review", ic(I.check, 20), "#/review", 8)}
+      ${item("recent", "Recent", ic(I.refresh, 20), "#/lists/recent", 5)}
+      ${item("lists", "My lists", ic(ICONS.ic_bookmark_outline, 20), "#/lists/saved", 4)}
       <hr class="ddiv">
-      ${item("settings", "Settings", ic(I.settings), "#/settings")}
-      ${item("more", "More", ic(I.info), "#/more")}`;
+      ${item("settings", "Settings", ic(I.settings, 20), "#/settings", 2)}
+      ${item("more", "More", ic(I.info, 20), "#/more", 7)}`;
     document.body.append(scrim, drawer);
     scrim.onclick = () => close();
     drawer.querySelectorAll(".ditem").forEach((a) => (a.onclick = (e) => {
@@ -79,6 +85,8 @@ const Menu = (() => {
     if (!drawer) build();
     const k = selectedKey();
     drawer.querySelectorAll(".ditem").forEach((a) => a.classList.toggle("on", a.dataset.key === k));
+    const due = Review.dueCount ? Review.dueCount() : 0, badge = drawer.querySelector(".dbadge");
+    if (badge) { badge.textContent = due > 99 ? "99+" : due; badge.hidden = !due; }
     Motion.syncFlow(drawer.querySelector(".wm"));
     animateTo(1);
   }
@@ -90,7 +98,8 @@ const Menu = (() => {
     let x0 = null, start = 0, lastX = 0, lastT = 0, vel = 0, active = false;
     addEventListener("pointerdown", (e) => {
       if (e.pointerType === "mouse" && e.button !== 0) return;
-      const canOpen = !location.hash.startsWith("#/word/") && !location.hash.startsWith("#/quiz/play") && !document.querySelector(".sheetover, .pover");
+      // Opens only from the menu button (a right swipe is Safari's Back); a drag still closes it.
+      const canOpen = false;
       if (openness > 0.5 ? (e.target.closest(".drawer") || e.target === scrim) : (canOpen && e.clientX < 20)) {
         x0 = e.clientX; start = openness; lastX = e.clientX; lastT = e.timeStamp; vel = 0; active = false;
       }
@@ -119,9 +128,9 @@ const Menu = (() => {
   // ---- More (MoreScreen) -----------------------------------------------------------
   function morePage(view) {
     const { tileHtml, wireTiles, subBar, wireBack } = Settings;
-    view.innerHTML = subBar("More") + `<div class="sgroup" style="margin-top:12px">
-      ${tileHtml({ title: "Pronunciation guide", subtitle: "How to read PEN-i-tuhns", icon: Word.SPEAKER.replace('class="spk"', 'class="spk" width="21" height="21"'), seed: 5, act: "say" })}</div>
-      <div class="sgroup" style="margin-top:16px">
+    view.innerHTML = subBar("More") + `<div class="sglabel" style="margin-top:14px">Learn</div><div class="sgroup">
+      ${tileHtml({ title: "Pronunciation guide", subtitle: "How to read any word's pronunciation", icon: Word.SPEAKER.replace('class="spk"', 'class="spk" width="21" height="21"'), seed: 5, act: "say" })}</div>
+      <div class="sglabel" style="margin-top:26px">Wordly</div><div class="sgroup">
       ${tileHtml({ title: "Feedback", icon: ic(ICONS.ic_mail, 21), seed: 1, act: "feedback" })}
       ${tileHtml({ title: "Rate this app", icon: ic(I.star, 21), seed: 6, act: "rate" })}
       ${tileHtml({ title: "Share this app", icon: ic(ICONS.ic_share, 21), seed: 9, act: "share" })}
@@ -202,6 +211,37 @@ const Menu = (() => {
     ["Same spelling, different sound", "Some words change with their job. Intimate is IN-tuh-mit when it describes something and IN-tuh-mayt when it means to hint. Each one shows its own."],
     ["Two ways to say it", "A few words are said two ways, shown with “or”: Peaked is PEEKT (pointed) or PEE-kid (looking pale and unwell)."],
     ["Words and phrases", "Single words get a pronunciation. Idioms and longer phrases are made of everyday words, so they don't need one."]];
+  // ---- "How to say X" (SayItSheet): the word's beats, the loud one marked -------------
+  // Vowel spellings longest first, so "yoo" wins over "oo" and "air" over "a".
+  const VOWEL_KEYS = () => [...VOWELS, ...R_VOWELS].sort((a, b) => b[0].length - a[0].length);
+  function beatsOf(pron) {
+    const keys = VOWEL_KEYS();
+    return pron.split(" or ")[0].split("-").filter((x) => x.trim()).map((raw) => {
+      const low = raw.toLowerCase();
+      let found = null, at = Infinity;
+      for (const k of keys) {
+        let i = low.indexOf(k[0]);
+        // A "y" before another vowel is the consonant of "yes", not the vowel of "fly".
+        if (k[0] === "y") while (i >= 0 && i + 1 < low.length && "aeiou".includes(low[i + 1])) i = low.indexOf("y", i + 1);
+        if (i >= 0 && (i < at || (i === at && k[0].length > (found ? found[0].length : 0)))) { at = i; found = k; }
+      }
+      const sound = found ? (found[0] === "eye" ? "eye, the same sound as fly" : `${found[0]} as in ${found[1].replace(/^as in /, "").split(",")[0]}`) : null;
+      return { text: raw, stressed: /[A-Z]/.test(raw), sound };
+    });
+  }
+  function sayItSheet(word, pron) {
+    const beats = beatsOf(pron);
+    const alts = pron.includes(" or ") ? pron.split(" or ").slice(1) : [];
+    const { el, close } = Settings.sheet(`<div class="sayx"><h2>How to say ${esc(word)}</h2>
+      <div class="sayit sayx-line" role="button" aria-label="Hear the word">${Word.SPEAKER}<span class="sp">${Word.sayItHtml(pron.split(" or ")[0])}</span></div>
+      <div class="sayx-beats">${beats.map((b, i) => `<div class="sxb"><span class="n">${i + 1}</span><span class="bt${b.stressed ? " on" : ""}">${esc(b.text)}</span>
+        <span class="tx">${esc(b.sound || "a quick l or n, almost no vowel")}${b.stressed ? "<small>say this beat loudest</small>" : ""}</span></div>`).join("")}</div>
+      ${alts.length ? `<div class="sayx-alt">Also said: ${alts.map((a) => Word.sayItHtml(a)).join(", ")}</div>` : ""}
+      <button class="sayx-guide">Full pronunciation guide</button></div>`);
+    el.querySelector(".sayx-line").onclick = () => Word.speak(word);
+    el.querySelector(".sayx-guide").onclick = () => close(() => go("#/say"));
+  }
+
   function sayGuidePage(view) {
     const card = (rows) => `<div class="sgcard">${rows.map(([s, as, w, p]) => `<div class="sgrow" role="button" data-w="${esc(w)}" aria-label="Hear ${esc(w)}">
       <span class="sgchip">${esc(s)}</span><span class="sgtx"><span class="sgas">${esc(as)}</span><span class="sgex"><span class="sgw">${esc(w)}</span><span class="sayt">${Word.sayItHtml(p)}</span></span></span>${Word.SPEAKER}</div>`).join("")}</div>`;
@@ -414,5 +454,5 @@ const Menu = (() => {
   }
   const shareWord = (entry, seed) => preview(`Share “${entry.word}”`, wordCard(entry, seed));
 
-  return { open, close, isOpen, morePage, aboutPage, privacyPage, sayGuidePage, preview, shareWord };
+  return { open, close, isOpen, morePage, aboutPage, privacyPage, sayGuidePage, sayItSheet, preview, shareWord };
 })();

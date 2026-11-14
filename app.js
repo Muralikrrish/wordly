@@ -13,13 +13,7 @@
 const $app = document.getElementById("app");
 
 // ---- colours (the app's ten card gradients) ------------------------------
-const PALETTE = [
-  ["#3D7178", "#2E565C", "#1F3C42"], ["#3F6A94", "#305274", "#213953"],
-  ["#5F5790", "#48426E", "#322D4E"], ["#78517F", "#5B3D61", "#3E2A43"],
-  ["#8F5468", "#6D3F50", "#492A38"], ["#95584A", "#714338", "#4C2D26"],
-  ["#9C6A3D", "#77502E", "#503620"], ["#857240", "#665830", "#463D22"],
-  ["#66703F", "#4E5631", "#363C22"], ["#457259", "#355744", "#243C30"],
-];
+const PALETTE = [["#24706D", "#1D605E", "#144643"], ["#315CA5", "#254988", "#1B3667"], ["#5546A5", "#423689", "#302767"], ["#844189", "#6B3271", "#4E2453"], ["#A13B59", "#872F49", "#652337"], ["#A64830", "#8D3A29", "#6A2B1E"], ["#975C14", "#824F11", "#623B0D"], ["#816513", "#705711", "#54410C"], ["#3D6E2C", "#325E24", "#25461B"], ["#257252", "#1D5C43", "#144531"]];
 // Palette.shading: soft → mid (38–78%) → a stop 55% of the way from mid to deep.
 const lerpHex = (a, b, t) => "#" + [1, 3, 5].map((k) => Math.round(parseInt(a.slice(k, k + 2), 16) * (1 - t)
   + parseInt(b.slice(k, k + 2), 16) * t).toString(16).padStart(2, "0")).join("");
@@ -235,8 +229,8 @@ function topBar(title, back = true) {
 // ---- the app's look: collection colours and icons (Collections.kt) -------
 const COL_SEED = {
   gre: 1, ielts: 6, core: 9,
-  virtues: 4, flaws: 7, rudeness: 0, villainy: 2, characters: 9, emotions: 5, law: 8, power: 3,
-  money: 1, health: 6, mind: 4, science: 9, argument: 7, language: 0, logic: 2,
+  virtues: 4, flaws: 7, rudeness: 0, villainy: 2, characters: 5, emotions: 9, law: 8, power: 3,
+  money: 1, health: 6, mind: 4, science: 2, argument: 7, language: 0, logic: 2,
   per_art: 3, per_logic: 6, per_figures: 8, per_speeches: 1, per_winning: 5,
   eponyms: 5, foreign: 8, idioms: 1, phrasal: 0, confused: 4, second: 2, stories: 7,
   idm_body: 0, idm_animals: 5, idm_food: 3, idm_money: 8, idm_sea: 6, idm_war: 1, idm_nature: 9,
@@ -259,14 +253,18 @@ const colIcon = (id) => COL_ICON[id] || (id.startsWith("fam_") ? "ic_col_root" :
 // Section cards on the home page (SectionStyle in Collections.kt).
 const SECTION = {
   "Exam prep": ["GRE, IELTS and TOEFL word lists", 1, "ic_col_exam"],
-  "Topics": ["Words by subject, from law to emotions", 7, "ic_col_globe"],
-  "Persuasion toolkit": ["The words of rhetoric and argument", 6, "ic_col_chat"],
-  "Curiosities": ["Idioms, word stories, look-alikes and more", 4, "ic_col_star"],
-  "Idioms by theme": ["Idioms sorted by what they're about", 9, "ic_col_quote"],
+  "Topics": ["Words by subject, from law to emotions", 8, "ic_col_globe"],
+  "Persuasion toolkit": ["The words of rhetoric and argument", 5, "ic_col_chat"],
+  "Curiosities": ["Idioms, word stories, look-alikes and more", 2, "ic_col_star"],
+  "Idioms by theme": ["Idioms sorted by what they're about", 4, "ic_col_quote"],
 };
 const OPEN_SECTION = "Exam prep";
 const icon = (name, cls = "") => `<span class="ico ${cls}">${ICONS[name] || ""}</span>`;
 
+// The Word of the Day's badge (ic_sun.xml).
+const SUN = '<svg viewBox="0 0 24 24" width="19" height="19"><circle cx="12" cy="12" r="4.4" fill="#fff"/><path d="M12 2.4v1.8M12 19.8v1.8M2.4 12h1.8M19.8 12h1.8M5.2 5.2l1.3 1.3M17.5 17.5l1.3 1.3M5.2 18.8l1.3-1.3M17.5 6.5l1.3-1.3" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg>';
+// The menu glyph (MenuGlyph): three rounded lines, the middle one shorter.
+const MENU_GLYPH = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 5h18M1 10h11.4M1 15h18"/></svg>';
 // The app's ribbon "W" (res/drawable/ic_logo.xml).
 const LOGO = `<svg viewBox="0 0 108 108" aria-hidden="true"><defs>
 <linearGradient id="lg1" gradientUnits="userSpaceOnUse" x1="24.1" y1="32.55" x2="39.05" y2="75.45"><stop offset="0" stop-color="#56E3CF"/><stop offset="1" stop-color="#2FA7C9"/></linearGradient>
@@ -307,7 +305,7 @@ function kotlinRandom(seedBig) {
     },
   };
 }
-const FAMILY = [0, 0, 3, 3, 1, 1, 4, 5, 2, 2];
+const FAMILY = [0, 1, 2, 3, 4, 5, 6, 6, 7, 0];
 const family = (i) => FAMILY[((i % 10) + 10) % 10];
 // Palette.challenge(day): a fresh hue daily, never the Word of the Day's hue
 // family that day, nor the same family as the day before.
@@ -376,37 +374,39 @@ async function home(view, opts = {}) {
   const cols = await collections();
   const open = cols.filter((c) => c.group === OPEN_SECTION);
   const groups = [...new Set(cols.map((c) => c.group))].filter((g) => g !== OPEN_SECTION);
-  const date = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  const date = new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
   const recents = recent().map((r) => data.byId.get(r.id)).filter(Boolean).slice(0, 5);
-  const titleCls = entry.word.length <= 22 ? "" : entry.word.length <= 34 ? "m" : "s";
+  const titleCls = entry.word.length <= 14 ? "" : entry.word.length <= 24 ? "m" : "s";
   const rows = [];
   for (let i = 0; i < open.length; i += 2) {
     const pair = open.slice(i, i + 2);
     rows.push(`<div class="crow" data-r>${pair.map((c, j) => collectionCard(c, i + j)).join("")}${pair.length === 1 ? surpriseTile() : ""}</div>`);
   }
   view.innerHTML = `
-    <div class="home-menu"><button class="icon-btn" aria-label="Menu" id="menu">${ICON.menu}</button></div>
-    <div class="hero" id="hero">${bgIcons()}<div class="hero-in">
-      <span class="logo-disc">${LOGO}</span><br><span class="wm">Wordly</span></div></div>
+    <div class="hero" id="hero"><div class="topbar">
+      <button class="roundbtn" aria-label="Menu" id="menu">${MENU_GLYPH}</button>
+      <span class="brand"><span class="wm">Wordly</span></span>
+      <a class="roundbtn" aria-label="My lists" href="#/lists/saved">${ICONS.ic_bookmark_outline}</a></div></div>
     ${Search.box("")}
     <div id="home-body">
-      <a class="wotd2" data-press data-r href="#/word/${entry.id}?c=${seed}&w=1">
-        <div class="top sheen" style="background:${gradient(seed)}"><h2 class="${titleCls}">${esc(entry.word)}</h2>
-          ${entry.preview ? `<p>${esc(entry.preview)}</p>` : ""}</div>
-        <div class="bottom"><div class="label">WORD OF THE DAY</div><div class="date">${date}</div></div>
+      <a class="wotd3 sheen" data-press="0.98" data-r href="#/word/${entry.id}?c=${seed}&w=1" style="background:${gradient(seed)}">
+        <div class="kick"><span class="bolt">${SUN}</span><span class="kt">WORD OF THE DAY</span><span class="date">${date}</span></div>
+        <h2 class="${titleCls}">${esc(entry.word)}</h2><div class="pos">${pos(entry.type)}</div>
+        <div class="say-slot"></div>
+        ${entry.preview ? `<p>${esc(entry.preview)}</p>` : ""}
+        <span class="more">Read more</span>
       </a>
       ${Review.banner(seed)}
-      <div class="home-head" data-r><span class="wm semi">Word collections</span></div>
+      <div data-r>${Quiz.banner()}</div>
+      <div class="home-head" data-r><h2>Word collections</h2><a class="see" href="#/collections">See all</a></div>
       <div style="height:12px"></div>
       <div class="cgrid">${rows.join("")}</div>
       ${open.length % 2 === 0 ? `<div class="cgrid" data-r>${surpriseTile()}</div>` : ""}
       <div class="glabel" data-r>More collections</div>
-      <div data-r>${sectionCard("Word families", "Learn one Greek or Latin root, unlock a whole family of words", 3, "ic_col_root", "#/families")}</div>
+      <div class="srow" data-r>${sectionCard("Word families", "Learn one Greek or Latin root, unlock a whole family of words", 3, "ic_col_root", "#/families")}
       ${groups.map((g, i) => { const [blurb, s, ic] = SECTION[g] || ["Word collections", i, "ic_collections"];
-        return `<div data-r>${sectionCard(g, blurb, s, ic, `#/section/${encodeURIComponent(g)}`)}</div>`; }).join("")}
-      <div class="home-head" data-r><span class="wm semi">Vocabulary quiz</span></div>
-      <div data-r>${Quiz.banner()}</div>
-      ${recents.length ? `<div class="home-head" data-r style="padding-bottom:2px"><span class="wm semi">Recent searches</span></div>
+        return sectionCard(g, blurb, s, ic, `#/section/${encodeURIComponent(g)}`); }).join("")}</div>
+      ${recents.length ? `<div class="home-head" data-r style="padding-bottom:2px"><h2>Recent searches</h2><a class="see" href="#/lists/recent">See all</a></div>
         <div class="hrows">${recents.map((e) => `<div class="hrow-wrap" data-r><a class="hrow" href="#/word/${e.id}">${wordRow(e)}</a></div>`).join("")}</div>` : ""}
       <div class="home-bottom"></div>
     </div>`;
@@ -414,6 +414,20 @@ async function home(view, opts = {}) {
   view.querySelectorAll("[data-r]").forEach((el) => tracker.add(el));
   view.querySelector("#menu").onclick = () => Menu.open();
   Quiz.wireBanner(view);
+  // How to say the day's word: it lives in the word's own file, so it slots
+  // in as soon as that arrives (usually at once: it's fetched early).
+  definition(entry.id).then((d) => {
+    const slot = view.querySelector(".wotd3 .say-slot");
+    const pron = d && d[2];
+    if (!slot || !pron) return;
+    slot.innerHTML = `<span class="sayit onclr" role="button" aria-label="Hear the word">${Word.SPEAKER}<span class="sp">${Word.sayItHtml(pron)}</span></span>`;
+    const say = slot.firstElementChild;
+    say.addEventListener("click", (ev) => { ev.preventDefault(); ev.stopPropagation(); Word.speak(entry.word); });
+    const talk = () => say.classList.toggle("talk", Word.speech.preparing || Word.speech.speaking);
+    Word.speech.listeners.add(talk);
+    const done = view.cleanup;
+    view.cleanup = () => { Word.speech.listeners.delete(talk); done && done(); };
+  }).catch(() => {});
   Search.attach(view, { hero: view.querySelector("#hero"), body: view.querySelector("#home-body"), ...opts });
 }
 
@@ -555,11 +569,30 @@ async function route() {
   Motion.restoreScroll(returning ? scrolls.get(key) || 0 : 0);
   Settings.topColor();
   tracker.open(performance.now());
+  window.__miniTitle && window.__miniTitle();      // the page's big title, below its sticky bar
   firstRoute = false;
   currentKind = kind;
   currentKey = key;
 }
 addEventListener("hashchange", route);
+// Sub-pages: the small title beside the back button once the large one has scrolled away.
+{
+  let queued = false;
+  const miniTitle = () => {
+    queued = false;
+    const sb = $view && $view.querySelector(".subbar");
+    if (!sb) return;
+    let h1 = sb.querySelector("h1");
+    if (h1 && h1.textContent) { h1.classList.add("bigt"); sb.after(h1); }      // out of the sticky bar
+    h1 = sb.nextElementSibling;
+    if (!h1 || !h1.classList.contains("bigt")) return;
+    sb.dataset.t = h1.textContent;
+    sb.classList.toggle("mini", scrollY > 40);
+  };
+  addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(miniTitle); } }, { passive: true });
+  addEventListener("hashchange", () => { setTimeout(miniTitle, 0); setTimeout(miniTitle, 300); });
+  window.__miniTitle = miniTitle;
+}
 history.scrollRestoration = "manual";
 // Support links like ".../?look=word" too (easier to build in Shortcuts).
 const startLook = new URLSearchParams(location.search).get("look");

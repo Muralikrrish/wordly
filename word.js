@@ -102,6 +102,22 @@ const Word = (() => {
     el.animate(KEYS, { duration: LINE.duration, delay: Math.max(0, delay), fill: "backwards" });
   }
 
+  // A section's icon from its heading (Markdown.kt sectionIcon).
+  function sectionIcon(heading) {
+    const h = heading.toLowerCase(), has = (...w) => w.some((x) => h.includes(x));
+    if (has("not ", " not", "mistake", "trap", "avoid", "wrong", "misuse", "careful", "pitfall", "error")) return "ic_col_warning";
+    if (has(" vs", "vs.", "versus", "difference", "differs", "differ from", "compare", "similar", "confus", "close in meaning", "synonym", "opposite", "antonym")) return "ic_col_notequal";
+    if (has("example", "sentence", "in use", "in action", "in context", "real life", "quote")) return "ic_col_quote";
+    if (has("origin", "story", "history", "etymolog", "comes from", "where the word", "root")) return "ic_col_scroll";
+    if (has("phrase", "collocation", "partner", "expression", "combination", "pair")) return "ic_col_chat";
+    if (has("picture", "imagine", "image", "visual", "analogy", "metaphor", "think of")) return "ic_col_bulb";
+    if (has("tone", "feel", "connotation", "emotion", "mood", "intensity", "shade")) return "ic_col_heart";
+    if (has("summary", "remember", "putting it", "key ", "takeaway", "stick", "memory", "in short", "quick")) return "ic_col_star";
+    if (has("where", "used", "usage", "context", "field", "situation", "world")) return "ic_col_globe";
+    if (has("people", "person", "who ")) return "ic_col_people";
+    return "ic_col_book";
+  }
+
   // ---- speech + the sound bars (Pronounce.kt EqualizerBars) ---------------
   const speech = { preparing: false, speaking: false, listeners: new Set() };
   function setSpeech(p, s) { speech.preparing = p; speech.speaking = s; speech.listeners.forEach((f) => f()); }
@@ -379,6 +395,8 @@ const Word = (() => {
     // way, so the page waits for it (up to 1.5 s on a slow connection) before
     // it starts opening; the old page stays until then.
     const defP = definition(id).catch(() => null);
+    let defNow = null;
+    defP.then((d) => { defNow = d; });
     const exP = extras().catch(() => null);
     await Promise.race([Promise.all([defP, exP]), new Promise((r) => setTimeout(r, 1500))]);
     addRecent(id);
@@ -389,17 +407,31 @@ const Word = (() => {
     // top edge: the soft stop easing into the mid one), so the header reaches the top.
     view.dataset.top = lerpHex(PALETTE[((seed % 10) + 10) % 10][0], PALETTE[((seed % 10) + 10) % 10][1], 0.3);
     const labelH = wotd ? 24 : 20;
+    // How to say it sits in the header when the word's file has arrived in time.
+    const headPron = defNow && defNow[2] ? defNow[2] : null;
+    const pronH = headPron ? 44 : 0;
     view.innerHTML = `<div class="wp">
       <header class="wp-head sheen" style="background:${gradient(seed)}"><div class="in">
         <div class="fold f-label" style="height:${labelH}px"><div class="label">${wotd ? "WORD OF THE DAY" : ""}</div></div>
         <div><span class="word" role="button" aria-label="Hear the word">${esc(e.word)}</span></div>
         <div class="fold f-pos" style="height:30px"><div class="pos">${pos(e.type)}</div></div>
+        ${headPron ? `<div class="fold f-pron" style="height:44px"><div class="hpron"><span class="sayit onclr" role="button" aria-label="Hear the word">${SPEAKER}<span class="sp">${sayItHtml(headPron)}</span></span><button class="hinfo" aria-label="How to say it"><svg viewBox="0 0 20 20" width="19" height="19" fill="none" stroke="#fff" stroke-width="1.6"><circle cx="10" cy="10" r="8.6"/><path d="M10 9v5.4" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="6.2" r="1.1" fill="#fff" stroke="none"/></svg></button></div></div>` : ""}
         <div class="tail"></div></div></header>
       <div class="wp-body"><div class="top-space"></div><div class="body-in"><div class="loading">…</div></div></div></div>`;
     const head = view.querySelector(".wp-head");
     const body = view.querySelector(".wp-body");
     const wordEl = view.querySelector(".word");
     const fLabel = view.querySelector(".f-label"), fPos = view.querySelector(".f-pos"), tail = view.querySelector(".tail");
+    const fPron = view.querySelector(".f-pron");
+    if (fPron) {
+      const hs = fPron.querySelector(".sayit");
+      hs.addEventListener("click", () => { speak(e.word); if (navigator.vibrate) navigator.vibrate(8); });
+      const talk = () => hs.classList.toggle("talk", speech.preparing || speech.speaking);
+      speech.listeners.add(talk);
+      const prevClean = () => speech.listeners.delete(talk);
+      view.addEventListener("wp-clean", prevClean, { once: true });
+      fPron.querySelector(".hinfo").addEventListener("click", () => Menu.sayItSheet(e.word, headPron));
+    }
     const fullH = head.offsetHeight;
     body.style.paddingTop = fullH + "px";
 
@@ -414,18 +446,29 @@ const Word = (() => {
 
     // The fold: label + part-of-speech rows close, the word scales to 72%,
     // the bottom gap goes 18 → 8 — all exactly at the finger's pace.
-    const dist = labelH + 30 + 10;
+    const dist = labelH + 30 + pronH + 10;
     let pop = 1;
     const fold = () => {
       const c = Math.min(1, Math.max(0, scrollY / dist));
       fLabel.style.height = `${labelH * (1 - c)}px`;
       fPos.style.height = `${30 * (1 - c)}px`;
+      if (fPron) { fPron.style.height = `${pronH * (1 - c)}px`; const k = fPron.firstElementChild; k.style.opacity = Math.max(0, 1 - 1.6 * c); }
       for (const f of [fLabel, fPos]) { const k = f.firstElementChild; k.style.opacity = 1 - c; k.style.transform = `translateY(${(-8 * c).toFixed(2)}px)`; }
       tail.style.height = `${18 - 10 * c}px`;
       wordEl.style.transform = `scale(${((1 - 0.28 * c) * pop).toFixed(4)})`;
     };
     let foldQueued = false;            // one fold per frame, however many scroll events
-    const onScroll = () => { if (!foldQueued) { foldQueued = true; requestAnimationFrame(() => { foldQueued = false; fold(); }); } };
+    let trayMark = scrollY, trayShown = true;
+    const trayEdge = () => {
+      const y = scrollY, end = document.documentElement.scrollHeight - innerHeight - 24;
+      let show = trayShown;
+      if (y < 48 || y >= end) { show = true; trayMark = y; }
+      else if (y - trayMark > 28) { show = false; trayMark = y; }
+      else if (trayMark - y > 28) { show = true; trayMark = y; }
+      else if ((!trayShown && y > trayMark) || (trayShown && y < trayMark)) trayMark = y;
+      if (show !== trayShown) { trayShown = show; view.querySelector(".tray2")?.classList.toggle("away", !show); }
+    };
+    const onScroll = () => { if (!foldQueued) { foldQueued = true; requestAnimationFrame(() => { foldQueued = false; fold(); trayEdge(); }); } };
     addEventListener("scroll", onScroll, { passive: true });
     fold();
 
@@ -438,7 +481,7 @@ const Word = (() => {
 
     const t = tray(e, () => history.back(), seed);
     view.appendChild(t);
-    view.cleanup = () => { removeEventListener("scroll", onScroll); t.cleanup(); document.querySelector(".savednote")?.remove(); };
+    view.cleanup = () => { removeEventListener("scroll", onScroll); t.cleanup(); document.querySelector(".savednote")?.remove(); view.dispatchEvent(new Event("wp-clean")); };
 
     const def = await defP;
     const bodyIn = view.querySelector(".body-in");
@@ -450,9 +493,9 @@ const Word = (() => {
     const mixes = ex.mixups.filter((m) => m.items.some(([eid]) => eid === id));
     const fams = ex.families.filter((f) => f.items.includes(id));
     const hasAfter = story || mixes.length || fams.length;
-    bodyIn.innerHTML = `${pron ? `<div class="sayit" role="button" aria-label="Hear the word">${SPEAKER}<span class="sp">${sayItHtml(pron)}</span></div>` : ""}${intro ? `<div class="dprose intro">${intro}</div><div style="height:${(Settings.paraGap() + 18).toFixed(1)}px"></div>` : ""}
+    bodyIn.innerHTML = `${pron && !headPron ? `<div class="sayit" role="button" aria-label="Hear the word">${SPEAKER}<span class="sp">${sayItHtml(pron)}</span></div>` : ""}${intro ? `<div class="dprose intro">${intro}</div><div style="height:${(Settings.paraGap() + 18).toFixed(1)}px"></div>` : ""}
       ${hasAfter ? `<div class="after">${story ? storyCard(story) : ""}${mixCard(mixes, id)}${familyCards(fams, id)}</div><div style="height:22px"></div>` : ""}
-      <div class="secs">${sections.map(([h], i) => `<div class="sec2" data-i="${i}"><div class="shd" data-press="0.975"><span class="abar"></span>
+      <div class="secs">${sections.map(([h], i) => `<div class="sec2" data-i="${i}"><div class="shd" data-press="0.975"><span class="sico">${icon(sectionIcon(h))}</span>
         <span class="title">${esc(h)}</span><span class="chev">${CHEV}</span></div><div class="body"></div></div>`).join("")}</div>
       <div class="dfoot"><div class="orn"><i></i><b></b><i></i></div><br>
         <span class="holder"><span class="sring"></span><span class="bnc" style="display:inline-block"><span class="pill" data-press="0.95">${icon("ic_shuffle")}Surprise me</span></span></span></div>

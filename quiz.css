@@ -240,3 +240,25 @@
 .wbin .capsule { margin-top: 10px; }
 .wfoot { display: flex; align-items: center; margin-top: 12px; }
 .wfoot span { flex: 1; font: 400 14px Outfit, sans-serif; color: var(--muted); }
+
+/* The Daily card on the Word Challenge page takes the first screen's spare
+   height: its content centred, and (with room) ten numbered tiles. */
+.qdaily { position: relative; display: flex; flex-direction: column; }
+.qdaily .dbody { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.dtiles { display: none; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.qdaily.roomy .dtiles { display: grid; }
+.qdaily.roomy .dthin { display: none; }
+.dt { height: 46px; border-radius: 14px; display: grid; place-items: center; background: rgba(255,255,255,.15);
+  font: 600 17px Outfit, sans-serif; color: rgba(255,255,255,.7); }
+.dt svg { width: 22px; height: 22px; }
+.dt.done { background: #fff; color: var(--mid); }
+.dt.miss { background: rgba(255,255,255,.10); color: rgba(255,255,255,.6); }
+.dt.next { box-shadow: inset 0 0 0 2px #fff; color: #fff; }
+.dteaser { display: none; padding: 14px 16px; border-radius: 18px; background: rgba(255,255,255,.13); box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
+.qdaily.roomy .dteaser { display: block; }
+.qdaily.roomy .dsub:has(~ div .dteaser), .qdaily.roomy .dbody:has(.dteaser) .dsub { display: none; }
+.dteaser .tk { font: 600 11px Outfit, sans-serif; letter-spacing: 1.3px; color: rgba(255,255,255,.75); }
+.dteaser .tc { margin-top: 6px; font: 400 15px/21px Inter, sans-serif; color: #fff; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+.dteaser .tb { display: flex; gap: 4px; margin-top: 12px; }
+.dteaser .tb i { flex: 0 1 26px; min-width: 8px; aspect-ratio: 1 / 1.2; border-radius: 6px; background: rgba(255,255,255,.2); }
+.dteaser .tb i.sp { flex: 0 1 13px; background: none; }

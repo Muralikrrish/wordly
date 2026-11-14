@@ -51,14 +51,8 @@ const Settings = (() => {
     ({ id, name, accentLight, accentDark, bgLight, bgDark, varLight, varDark, contLight, contDark }));
   const themeOf = (id) => THEMES.find((t) => t.id === id) || THEMES[1];
   // The card gradients: the jewel tones on dark, re-toned for the cream paper.
-  const DARK_PALETTE = [
-    ["#3D7178", "#2E565C", "#1F3C42"], ["#3F6A94", "#305274", "#213953"], ["#5F5790", "#48426E", "#322D4E"], ["#78517F", "#5B3D61", "#3E2A43"],
-    ["#8F5468", "#6D3F50", "#492A38"], ["#95584A", "#714338", "#4C2D26"], ["#9C6A3D", "#77502E", "#503620"], ["#857240", "#665830", "#463D22"],
-    ["#66703F", "#4E5631", "#363C22"], ["#457259", "#355744", "#243C30"]];
-  const LIGHT_PALETTE = [
-    ["#4E7F7B", "#3E6865", "#30514F"], ["#4F7196", "#405C7C", "#324862"], ["#6F6694", "#5A527A", "#45405F"], ["#86628C", "#6D4F73", "#543D59"],
-    ["#A15F68", "#874B55", "#6A3A43"], ["#A5644D", "#8A5140", "#6B3F32"], ["#A06A36", "#86572B", "#6A4421"], ["#887438", "#70602E", "#574A24"],
-    ["#6A7D4C", "#56673D", "#43512F"], ["#5A7D6B", "#4A6858", "#3A5245"]];
+  const DARK_PALETTE = [["#24706D", "#1D605E", "#144643"], ["#315CA5", "#254988", "#1B3667"], ["#5546A5", "#423689", "#302767"], ["#844189", "#6B3271", "#4E2453"], ["#A13B59", "#872F49", "#652337"], ["#A64830", "#8D3A29", "#6A2B1E"], ["#975C14", "#824F11", "#623B0D"], ["#816513", "#705711", "#54410C"], ["#3D6E2C", "#325E24", "#25461B"], ["#257252", "#1D5C43", "#144531"]];
+  const LIGHT_PALETTE = [["#2B837F", "#22706E", "#18524F"], ["#3A6BC0", "#2C559F", "#203F78"], ["#6352C0", "#4D3FA0", "#382E78"], ["#9A4CA0", "#7D3B84", "#5B2A61"], ["#BC4568", "#9E3756", "#762941"], ["#C25438", "#A44430", "#7C3324"], ["#B06C18", "#985D14", "#724510"], ["#977617", "#836614", "#624C0F"], ["#488134", "#3B6E2B", "#2C5220"], ["#2C8560", "#226C4E", "#18513A"]];
   const WM_DARK = ["#6CC0B7", "#5CC3D0", "#72B5E0", "#7FA3EA", "#8E95E6", "#A99BEA", "#A08CDC", "#C28ACF", "#D986BF", "#E596AE", "#E19A8A", "#EBB08F", "#DDAA73", "#D7BE6E", "#B9C877", "#86C9A0", "#5FC0A0"];
   const WM_LIGHT = ["#2E8A82", "#2B8A9C", "#2F7FB0", "#3A6FC0", "#5559B8", "#6A5CC0", "#7654B0", "#8E4F9E", "#A04A8C", "#B0587E", "#B8594A", "#B8683F", "#B07633", "#9C8126", "#6E8A2E", "#3C8F62", "#2A8B72"];
   const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(",");
@@ -87,9 +81,11 @@ const Settings = (() => {
       "--outline": c.outline, "--right": c.right, "--wrong": c.wrong, "--err": c.err, "--on-err": c.onErr,
       "--ink-rgb": rgb(c.ink), "--accent-rgb": rgb(c.accent), "--muted-rgb": rgb(c.muted), "--bg-rgb": rgb(c.bg), "--right-rgb": rgb(c.right), "--wrong-rgb": rgb(c.wrong),
       // The tray's glass: smoky with white icons on dark, warm milk with dark icons on cream.
-      "--glass": dark ? "rgba(35,38,47,.37)" : "rgba(250,246,238,.72)", "--glass-edge": dark ? "rgba(255,255,255,.22)" : "rgba(28,27,24,.10)",
+      "--glass": dark ? "rgba(35,38,47,.26)" : "rgba(255,252,246,.44)", "--glass-edge": dark ? "rgba(255,255,255,.16)" : "rgba(28,27,24,.08)",
+      "--glass-rim": dark ? "rgba(255,255,255,.30)" : "rgba(255,255,255,.95)",
       "--glass-shadow": dark ? ".45" : ".16", "--tray-ink": dark ? "#fff" : "#26282E", "--saved": dark ? "#FFCB6B" : "#C7881A",
-      "--wm": `linear-gradient(90deg, ${[...(dark ? WM_DARK : WM_LIGHT), (dark ? WM_DARK : WM_LIGHT)[0]].join(", ")})`,
+      // The name in the logo's own four colours (teal, blue, violet, pink), held still.
+      "--wm": dark ? "linear-gradient(100deg, #5FD6C4, #6A97F2, #AD84F4, #F07AA6)" : "linear-gradient(100deg, #1C968C, #2B62D6, #7448D4, #D0457E)",
       "--read-font": r.font.family, "--read-size": `${r.size}px`, "--read-lh": (r.font.lh * r.line).toFixed(4), "--read-para": `${(r.size * r.para).toFixed(2)}px`,
       "--read-word": `${r.word}px`, "--read-letter": `${r.letter}em`, "--read-margin": `${r.margin}px`,
       // A section card's title: one size step below the text (FontChoice steps).
@@ -145,7 +141,6 @@ const Settings = (() => {
       entrance(el, 40 + i * 55);
       const chev = el.querySelector(".schev");
       const sp = new Motion.Spring(0, { damping: 0.6, stiffness: 700, onUpdate: (p) => {
-        el.style.transform = p ? `scale(${(1 - 0.025 * p).toFixed(4)})` : "";
         el.style.setProperty("--press", p.toFixed(3));
         chev.style.transform = `translateX(${(3 * p).toFixed(2)}px)`;
         chev.style.opacity = (0.55 + 0.35 * p).toFixed(3);

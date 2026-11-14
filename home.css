@@ -17,22 +17,21 @@
   background-size: 300% 300%; background-position: 50% 50%; background-repeat: no-repeat;
   will-change: transform; animation: sheen 8.5s linear infinite;
 }
-/* Web app: the cards stay still — no moving glow (the Android app keeps it). */
-.sheen::before { display: none; }
+/* One glint as a card first appears, then still (Sheen.kt). */
+.sheen::before { animation: sheen 3.8s linear 450ms 1 both; }
 .sheen.soft::before { --s: 0.07; }
 .sheen > * { position: relative; z-index: 1; }
 /* The glow band sits in the middle of a card-sized layer that slides corner to corner
    (a moved layer, not a repainted gradient: no paint work while it runs). */
-@keyframes sheen { 0% { transform: translate3d(-100%, -100%, 0); } 45%, 100% { transform: translate3d(100%, 100%, 0); } }
+@keyframes sheen { 0% { transform: translate3d(-100%, -100%, 0); } 100% { transform: translate3d(100%, 100%, 0); } }
 
 /* The flowing wordmark: a closed 17-colour wheel repeating end to end, moving
    one way forever — one turn every 17 s (shared clock: see Motion.syncFlow). */
 .wm {
   display: inline-block; font-family: Outfit, sans-serif; font-weight: 700; letter-spacing: -0.025em;
   background-image: var(--wm);
-  background-size: 450% 100%; background-repeat: repeat-x;
+  background-size: 100% 100%; background-repeat: no-repeat;
   -webkit-background-clip: text; background-clip: text; color: transparent;
-  animation: flow 17s linear infinite; will-change: background-position;
 }
 .wm.semi { font-weight: 600; }
 @keyframes flow { from { background-position: 0% 0; } to { background-position: -128.5714% 0; } }
@@ -43,16 +42,17 @@
 #splash .splash-icon svg { width: 100%; height: 100%; }
 
 /* ---- home ---- */
-.home-menu { padding: calc(4px + var(--top)) 0 0 6px; }
-.home-menu .icon-btn { width: 48px; height: 48px; color: var(--ink); }
-/* The logo is pulled up 26 dp so its top lines up with the menu button (the
-   app's "shave"); the pull lives INSIDE the hero, so folding the hero takes it
-   along and the search bar lands right under the menu row. */
-.hero { position: relative; display: flow-root; padding: 0; text-align: center; }
-.hero-in { margin-top: -26px; }
-.hero .logo-disc { width: 96px; height: 96px; border-radius: 50%; background: var(--container); display: inline-grid; place-items: center; }
-.hero .logo-disc svg { width: 68px; height: 68px; }
-.hero .wm { font-size: 36px; line-height: 1.2; margin: 12px 0 12px; }
+/* The top bar (SearchScreen): menu · logo and name · My lists, one row. It
+   folds away with the hero while the search is in use. */
+.hero { position: relative; display: flow-root; padding: 0; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: calc(22px + var(--top)) 14px 14px; }
+.topbar .brand { display: flex; align-items: center; gap: 10px; }
+.hero .logo-disc { width: 46px; height: 46px; border-radius: 50%; background: var(--surface); display: inline-grid; place-items: center; flex: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,.18); }
+.hero .logo-disc svg { width: 34px; height: 34px; }
+.topbar .brand { flex: 1; justify-content: center; }
+.hero .wm { font-size: 31px; line-height: 1.2; transform: translateY(-1px); }
+.topbar .roundbtn svg { width: 20px; height: 20px; }
 .bg-icons { position: absolute; inset: 0; pointer-events: none; }
 .bg-icon { position: absolute; width: 44px; height: 44px; opacity: 0.15; will-change: transform; animation: drift 11s infinite; }
 .bg-icon svg { width: 100%; height: 100%; }
@@ -65,8 +65,6 @@
 }
 
 .search { padding: 6px 20px; top: 0; }
-.search label { height: 56px; padding: 0 12px 0 8px; border-radius: 28px; background: var(--container);
-  box-shadow: 0 2px 4px rgba(0,0,0,.28), 0 1px 2px rgba(0,0,0,.2); gap: 6px; }
 .search input { font: 400 17px Outfit, sans-serif; }
 .search .lead { width: 40px; height: 40px; display: grid; place-items: center; color: var(--muted); flex: none; position: relative; }
 .search .lead svg { width: 24px; height: 24px; position: absolute; }
@@ -82,8 +80,39 @@
 .wotd2 .label { font: 600 11px Outfit, sans-serif; letter-spacing: 1.4px; color: var(--accent); }
 .wotd2 .date { font: 400 13px Outfit, sans-serif; color: var(--muted); margin-top: 2px; }
 
-.home-head { text-align: center; padding: 30px 20px 0; }
-.home-head .wm { font-size: 22px; line-height: 1.25; }
+/* Section titles: left-aligned, with "See all" on the right. */
+.home-head { display: flex; align-items: center; padding: 28px 12px 0 22px; }
+.home-head h2 { flex: 1; margin: 0; font: 600 21px/1.25 Outfit, sans-serif; color: var(--ink); }
+.home-head .see { padding: 6px 10px; border-radius: 999px; font: 600 14.5px Outfit, sans-serif; color: var(--accent); }
+.home-head .see:active { background: rgba(var(--accent-rgb), .1); }
+
+/* The Word of the Day: the home screen's showpiece (SearchScreen.kt WotdCard). */
+.wotd3 { display: block; margin: 18px 20px 0; border-radius: 26px; padding: 16px 18px 18px; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+.wotd3 .kick { display: flex; align-items: center; font: 600 12px Outfit, sans-serif; letter-spacing: 1.4px; color: rgba(255,255,255,.9); }
+.wotd3 .kick .bolt { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.18); display: grid; place-items: center; margin-right: 10px; }
+.wotd3 .kick .kt { flex: 1; }
+.wotd3 .date { font: 500 13px Outfit, sans-serif; letter-spacing: 0; color: rgba(255,255,255,.75); }
+.wotd3 h2 { margin: 12px 0 0; font: 600 36px/42px Outfit, sans-serif; overflow-wrap: anywhere; }
+.wotd3 h2.m { font-size: 30px; line-height: 36px; }
+.wotd3 h2.s { font-size: 24px; line-height: 30px; }
+.wotd3 .pos { font: italic 400 15px Outfit, sans-serif; color: rgba(255,255,255,.85); }
+.wotd3 .say-slot:not(:empty) { margin: 6px 0 0 -10px; }
+.wotd3 p { margin: 12px 0 0; font: 400 14.5px/21px Inter, sans-serif; color: rgba(255,255,255,.93);
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.wotd3 .more { display: inline-block; margin-top: 16px; padding: 8px 16px; border-radius: 999px; background: rgba(255,255,255,.2); font: 600 14.5px Outfit, sans-serif; }
+
+/* The say-it line on a colour card: all white. */
+.sayit.onclr { margin: 0; color: rgba(255,255,255,.75); background: rgba(255,255,255,.12); font-size: 16px; }
+.sayit.onclr .spk { color: #fff; width: 18px; height: 18px; }
+.sayit.onclr b { color: #fff; }
+.sayit.onclr:active { background: rgba(255,255,255,.2); }
+
+/* The other sections as one row of cards to swipe through. */
+.srow { display: flex; gap: 12px; overflow-x: auto; padding: 0 20px 6px; scroll-snap-type: x mandatory; scroll-padding: 0 20px;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.srow::-webkit-scrollbar { display: none; }
+.srow .scard { flex: none; width: 228px; height: 150px; margin: 0; padding-right: 14px; scroll-snap-align: start; }
+.srow .scard p { -webkit-line-clamp: 3; }
 
 .cgrid { padding: 0 20px; }
 /* Two cards a row, always the same height (the app's IntrinsicSize rows): a
@@ -102,6 +131,16 @@
 .ccard.quiet p { color: var(--muted); -webkit-line-clamp: 1; }
 .ccard.quiet .badge2 { background: rgba(var(--accent-rgb),.14); }
 .ccard.quiet .badge2 .ico { color: var(--accent); width: 20px; height: 20px; }
+/* Surprise me: the die rolls once as the tile appears, and again when tapped. */
+.ccard.quiet .badge2 .ico { animation: dieRoll 900ms cubic-bezier(.3,.7,.4,1) 500ms backwards; }
+.ccard.quiet.roll .badge2 .ico { animation: dieRoll 600ms cubic-bezier(.3,.7,.4,1); }
+@keyframes dieRoll {
+  0% { transform: rotate(0) translateY(0); }
+  35% { transform: rotate(200deg) translateY(-9px); }
+  70% { transform: rotate(340deg) translateY(0); }
+  85% { transform: rotate(370deg) translateY(-2px); }
+  100% { transform: rotate(360deg) translateY(0); }
+}
 .scard { position: relative; display: block; height: 112px; margin: 0 20px 12px; border-radius: 20px; color: #fff;
   padding: 14px 64px 14px 14px; box-shadow: 0 2px 5px rgba(0,0,0,.3); }
 .scard h3 { font: 600 18px/22px Outfit, sans-serif; margin: 0; }

@@ -95,13 +95,16 @@
 .secs { padding: 0 var(--read-margin); }
 .sec2 + .sec2 { margin-top: 10px; }
 .sec2 .shd { display: flex; align-items: stretch; gap: 13px; padding: 14px 12px 14px 14px; border-radius: 18px; cursor: pointer;
-  background: rgba(var(--acc-rgb), calc(.08 + .06 * var(--open, 0))); border: 1px solid rgba(var(--acc-rgb), calc(.16 + .18 * var(--open, 0))); }
-.sec2 .abar { width: 4px; border-radius: 2px; flex: none; background: linear-gradient(var(--acc), rgba(var(--acc-rgb), .3)); }
-.sec2 .title { flex: 1; align-self: center; font-family: var(--read-font); font-weight: 600; font-size: var(--read-title); line-height: 1.28; color: var(--ink); }
+  background: rgba(var(--acc-rgb), calc(.11 + .05 * var(--open, 0))); border: 1px solid rgba(var(--acc-rgb), calc(.16 + .18 * var(--open, 0))); }
+.sec2 .sico { width: 34px; height: 34px; border-radius: 10px; flex: none; align-self: center; display: grid; place-items: center; background: rgba(var(--acc-rgb), .18); color: var(--acc); }
+.sec2 .sico .ico { width: 19px; height: 19px; }
+/* Section titles in the app's own face (Outfit): the card is something to tap, the text under it is what you read. */
+.sec2 .title { flex: 1; align-self: center; font-family: Outfit, sans-serif; font-weight: 600; font-size: calc(var(--read-title) * 0.97); line-height: 1.25; color: var(--ink); }
 .sec2 .chev { width: 32px; height: 32px; border-radius: 50%; align-self: center; flex: none; display: grid; place-items: center;
   background: rgba(var(--acc-rgb), calc(.16 + .14 * var(--open, 0))); color: var(--acc); }
 .sec2 .chev svg { width: 22px; height: 22px; transform: rotate(calc(180deg * var(--open, 0))); }
-.sec2 .body { overflow: hidden; height: 0; }
+/* The section's text lines up with the text outside the cards (the card row already sits inside the reading margin). */
+.sec2 .body { overflow: hidden; height: 0; margin: 0 calc(-1 * var(--read-margin)); }
 .sec2 .body .dprose { padding-top: 16px; padding-bottom: 14px; }
 
 /* The quiet close: ── • ── and "Surprise me". */
@@ -117,10 +120,18 @@
 .wp-clear { height: 140px; }
 
 /* The floating glass tray. */
-.tray2 { position: fixed; left: 50%; bottom: calc(16px + var(--bottom)); z-index: 20; transform: translateX(-50%); }
+.tray2 { position: fixed; left: 50%; bottom: calc(16px + var(--bottom)); z-index: 20; transform: translateX(-50%);
+  transition: transform .42s cubic-bezier(.2,.9,.3,1), opacity .3s; }
+/* Out of the way while reading down; back when scrolling up or at the ends. */
+.tray2.away { transform: translate(-50%, 120px); opacity: .6; }
 .tray2 .glass { display: flex; gap: 4px; padding: 5px 8px; border-radius: 999px;
-  background: var(--glass); -webkit-backdrop-filter: blur(22px) saturate(1.2); backdrop-filter: blur(22px) saturate(1.2);
-  border: 1px solid var(--glass-edge); box-shadow: 0 10px 28px rgba(0,0,0,var(--glass-shadow)); }
+  background: var(--glass); -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6);
+  border: 1px solid var(--glass-edge); box-shadow: inset 0 1px 0 var(--glass-rim), 0 10px 28px rgba(0,0,0,var(--glass-shadow)); }
+/* The header's pronunciation row: the say-it pill and the info button. */
+.wp-head .hpron { display: flex; justify-content: center; align-items: center; gap: 8px; padding-top: 6px; }
+.wp-head .hpron .sayit { margin: 0; }
+.wp-head .hinfo { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.14); display: grid; place-items: center; }
+.wp-head .hinfo:active { background: rgba(255,255,255,.24); }
 .tray2 .slot { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: var(--tray-ink); cursor: pointer; position: relative; }
 .tray2 .slot svg { display: block; }
 .tray2 .fx { position: absolute; left: -60px; right: -60px; top: -60px; bottom: -60px; pointer-events: none; }

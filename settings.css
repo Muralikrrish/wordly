@@ -4,15 +4,18 @@
    ====================================================================== */
 
 /* ---- settings rows (SettingsGroup / SettingsItem) ---- */
-.sgroup { display: flex; flex-direction: column; gap: 10px; padding: 0 16px; }
-.sitem { --press: 0; position: relative; display: flex; align-items: center; width: 100%; padding: 14px 12px 14px 14px; border-radius: 20px; text-align: left;
-  background: var(--surface); box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .05); overflow: hidden; }
+/* Settings rows gathered in one rounded card, hairlines between them. */
+.sgroup { display: flex; flex-direction: column; margin: 0 16px; border-radius: 24px; overflow: hidden;
+  background: var(--surface); box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .05); }
+.sglabel { margin: 0 22px 8px; font: 600 13.5px Outfit, sans-serif; letter-spacing: 1.2px; text-transform: uppercase; color: var(--accent); }
+.sitem { --press: 0; position: relative; display: flex; align-items: center; width: 100%; padding: 13px 12px 13px 14px; text-align: left; background: none; }
+.sitem + .sitem::before { content: ""; position: absolute; left: 74px; right: 16px; top: 0; height: 1px; background: rgba(var(--ink-rgb), .07); }
 .sitem::after { content: ""; position: absolute; inset: 0; background: rgba(var(--ink-rgb), calc(.05 * var(--press))); pointer-events: none; }
 .stile2 { width: 44px; height: 44px; flex: none; border-radius: 14px; display: grid; place-items: center; color: #fff; margin-right: 16px; }
 .stile2 .fmark { font-weight: 600; font-size: 17px; }
 .stx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.stx b { font: 500 18px Outfit, sans-serif; color: var(--ink); }
-.stx small { margin-top: 1px; font: 400 14.5px/19px Outfit, sans-serif; color: var(--muted); }
+.stx b { font: 500 17.5px Outfit, sans-serif; color: var(--ink); }
+.stx small { margin-top: 1px; font: 400 14px/19px Outfit, sans-serif; color: var(--muted); }
 .schev { display: grid; margin-left: 8px; color: var(--muted); opacity: .55; }
 .schev svg { width: 24px; height: 24px; }
 
@@ -76,15 +79,20 @@
 .dscrim { position: fixed; inset: 0; z-index: 70; background: rgba(0,0,0,.32); opacity: 0; pointer-events: none; }
 .drawer { position: fixed; top: 0; bottom: 0; left: 0; z-index: 71; width: min(360px, 100vw); overflow-y: auto; visibility: hidden;
   padding: var(--top) 0 calc(12px + var(--bottom)); background: var(--surface); border-radius: 0 16px 16px 0; transform: translate3d(-100%,0,0); will-change: transform; }
-.dhead { display: flex; flex-direction: column; align-items: center; padding: 30px 0 22px; }
-.ddisc { width: 84px; height: 84px; border-radius: 50%; background: var(--container); display: grid; place-items: center; }
-.ddisc svg { width: 50px; height: 50px; }
-.dwm { margin-top: 10px; font-size: 28px; line-height: 1.2; animation-play-state: paused; }
-.drawer.flowing .dwm { animation-play-state: running; }
-.ditem { display: flex; align-items: center; height: 56px; margin: 0 12px; padding: 0 24px 0 16px; border-radius: 99px; color: var(--muted); }
-.ditem.on { background: var(--container); color: var(--ink); }
-.ditem .ico { width: 24px; height: 24px; flex: none; margin-right: 12px; }
-.ditem span:last-child { font: 400 17px Outfit, sans-serif; }
+.dhead { display: flex; align-items: center; gap: 14px; padding: 28px 20px 24px 24px; }
+.ddisc { width: 52px; height: 52px; flex: none; border-radius: 50%; background: var(--container); display: grid; place-items: center; box-shadow: 0 2px 6px rgba(0,0,0,.18); }
+.ddisc svg { width: 38px; height: 38px; }
+.dname { display: flex; flex-direction: column; }
+.dwm { font-size: 27px; line-height: 1.15; }
+.dname small { font: 400 13.5px Outfit, sans-serif; color: var(--muted); }
+.ditem { display: flex; align-items: center; margin: 2px 12px; padding: 9px 12px; border-radius: 16px; color: var(--ink); }
+.ditem.on { background: rgba(var(--accent-rgb), .13); color: var(--accent); }
+.ditem .dtile { width: 36px; height: 36px; flex: none; border-radius: 11px; display: grid; place-items: center; color: #fff; margin-right: 14px; }
+.ditem .dtile .ico svg { fill: currentColor; }
+.ditem .dlab { flex: 1; font: 500 16.5px Outfit, sans-serif; }
+.ditem.on .dlab { font-weight: 600; }
+.dbadge { padding: 2px 9px; border-radius: 99px; background: var(--accent); color: var(--on-accent); font: 600 13px Outfit, sans-serif; }
+.dbadge[hidden] { display: none; }
 .ddiv { border: 0; height: 1px; margin: 8px 28px; background: rgba(var(--ink-rgb), .10); }
 
 /* ---- About / privacy ---- */
@@ -188,3 +196,18 @@
 .sayt i { font-style: normal; opacity: .5; }
 .sg .talk .w1 { animation: sayw 700ms linear infinite; }
 .sg .talk .w2 { animation: sayw 700ms linear -525ms infinite; }
+
+/* "How to say X" sheet (SayItSheet). */
+.sayx { padding: 4px 22px 28px; }
+.sayx h2 { margin: 0 0 10px; font: 600 20px Outfit, sans-serif; color: var(--ink); }
+.sayx .sayx-line { margin: 0 0 16px; font-size: 20px; background: rgba(var(--accent-rgb), .08); --acc: var(--accent); }
+.sayx-beats { border-radius: 18px; overflow: hidden; background: var(--surface); }
+.sxb { display: flex; align-items: center; padding: 11px 14px; }
+.sxb + .sxb { border-top: 1px solid rgba(var(--ink-rgb), .06); }
+.sxb .n { width: 22px; font: 400 13px Outfit, sans-serif; color: var(--muted); }
+.sxb .bt { min-width: 64px; text-align: center; padding: 6px 10px; border-radius: 10px; background: rgba(var(--accent-rgb), .12); color: var(--accent); font: 600 16px Outfit, sans-serif; margin-right: 14px; }
+.sxb .bt.on { background: var(--accent); color: var(--on-accent); }
+.sxb .tx { flex: 1; display: flex; flex-direction: column; font: 400 15px Outfit, sans-serif; color: var(--ink); }
+.sxb .tx small { font-size: 13px; color: var(--accent); }
+.sayx-alt { margin-top: 12px; font: 400 15px Outfit, sans-serif; color: var(--muted); }
+.sayx-guide { margin-top: 14px; padding: 8px 0; font: 600 15.5px Outfit, sans-serif; color: var(--accent); background: none; }
