@@ -110,7 +110,7 @@
 .dfoot .orn i { width: 36px; height: 1px; background: rgba(var(--acc-rgb), .35); }
 .dfoot .orn b { width: 5px; height: 5px; border-radius: 50%; margin: 0 10px; background: rgba(var(--acc-rgb), .7); }
 .dfoot .holder { position: relative; display: inline-block; margin-top: 24px; }
-.dfoot .ring { position: absolute; inset: 0; border-radius: 999px; border: 2px solid rgba(var(--acc-rgb), .8); opacity: 0; pointer-events: none; }
+.dfoot .sring { position: absolute; inset: 0; border-radius: 999px; border: 2px solid rgba(var(--acc-rgb), .8); opacity: 0; pointer-events: none; }
 .dfoot .pill { display: inline-flex; align-items: center; gap: 10px; padding: 12px 22px; border-radius: 999px; cursor: pointer;
   background: rgba(var(--acc-rgb), .13); border: 1px solid rgba(var(--acc-rgb), .30); font: 500 17px Outfit, sans-serif; color: var(--ink); }
 .dfoot .pill .ico { width: 20px; height: 20px; color: var(--acc); }

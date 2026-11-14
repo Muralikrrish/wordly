@@ -455,7 +455,7 @@ const Word = (() => {
       <div class="secs">${sections.map(([h], i) => `<div class="sec2" data-i="${i}"><div class="shd" data-press="0.975"><span class="abar"></span>
         <span class="title">${esc(h)}</span><span class="chev">${CHEV}</span></div><div class="body"></div></div>`).join("")}</div>
       <div class="dfoot"><div class="orn"><i></i><b></b><i></i></div><br>
-        <span class="holder"><span class="ring"></span><span class="bnc" style="display:inline-block"><span class="pill" data-press="0.95">${icon("ic_shuffle")}Surprise me</span></span></span></div>
+        <span class="holder"><span class="sring"></span><span class="bnc" style="display:inline-block"><span class="pill" data-press="0.95">${icon("ic_shuffle")}Surprise me</span></span></span></div>
       <div class="wp-clear"></div>`;
 
     // How to say it: tap to hear; the waves pulse while the word is spoken.
@@ -562,7 +562,7 @@ const Word = (() => {
     // random word 430 ms later.
     const foot = bodyIn.querySelector(".dfoot");
     if (animate) foot.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay: 1300, fill: "backwards" });
-    const pill = foot.querySelector(".pill"), ring = foot.querySelector(".ring"), bnc = foot.querySelector(".bnc");
+    const pill = foot.querySelector(".pill"), ring = foot.querySelector(".sring"), bnc = foot.querySelector(".bnc");
     let busy = false;
     pill.addEventListener("click", () => {
       if (busy) return;

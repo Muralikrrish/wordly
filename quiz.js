@@ -591,7 +591,7 @@ const Quiz = (() => {
       }
       if (show === barShown && !instant) return;
       barShown = show;
-      nextBar.style.pointerEvents = show ? "" : "none";
+      nextBar.style.pointerEvents = show ? "auto" : "none";   // the stylesheet keeps it "none" while hidden
       if (instant) { barY.snap(show ? 0 : 1); barA.snap(show ? 1 : 0); return; }
       if (show) { barY.to(0); barA.to(1); }
       else {
