@@ -45,7 +45,7 @@
 /* The top bar (SearchScreen): menu · logo and name · My lists, one row. It
    folds away with the hero while the search is in use. */
 .hero { position: relative; display: flow-root; padding: var(--top) 0 0; }   /* the status-bar room stays when the hero folds */
-.topbar { display: flex; align-items: center; justify-content: space-between; padding: 22px 14px 14px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 22px 14px 20px; }
 .topbar .brand { display: flex; align-items: center; gap: 10px; }
 .hero .logo-disc { width: 46px; height: 46px; border-radius: 50%; background: var(--surface); display: inline-grid; place-items: center; flex: none;
   box-shadow: 0 2px 6px rgba(0,0,0,.18); }
