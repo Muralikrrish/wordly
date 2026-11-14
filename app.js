@@ -369,6 +369,19 @@ function sectionCard(title, blurb, seed, iconName, href) {
 
 // The Daily Challenge banner lives in quiz.js (stage 5).
 
+// iPhone, in Safari (not yet added to the home screen), from the second visit:
+// a small card showing how to install Wordly, until it is closed.
+const SHARE_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7.5 7.5 12 3l4.5 4.5"/><path d="M7 11H5v10h14V11h-2"/></svg>';
+function installCard() {
+  const standalone = navigator.standalone || matchMedia("(display-mode: standalone)").matches;
+  if (!IS_IOS || standalone || store.get("a2hsClosed", false) || store.get("visits", 0) < 2) return "";
+  return `<div class="a2hs" data-r><div class="a2t"><b>Put Wordly on your home screen</b>
+    <span>Tap ${SHARE_ICON} Share below, then <b>Add to Home Screen</b>. It opens like an app and works offline.</span></div>
+    <button class="a2x" aria-label="Close" onclick="store.set('a2hsClosed', true); this.closest('.a2hs').remove()">✕</button></div>`;
+}
+// Visits, counted once per opening of the app.
+store.set("visits", store.get("visits", 0) + 1);
+
 async function home(view, opts = {}) {
   const { entry, seed } = wordOfTheDay();
   const cols = await collections();
@@ -396,6 +409,7 @@ async function home(view, opts = {}) {
         ${entry.preview ? `<p>${esc(entry.preview)}</p>` : ""}
         <span class="more">Read more</span>
       </a>
+      ${installCard()}
       ${Review.banner(seed)}
       <div data-r>${Quiz.banner()}</div>
       <div class="home-head" data-r><h2>Word collections</h2><a class="see" href="#/collections">See all</a></div>

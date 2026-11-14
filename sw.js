@@ -3,7 +3,7 @@
    quick-definition file in data/q/) is stored the first time it is read, so
    words already read open offline.
    Bump APP when the page's own files change, so phones pick up the new ones. */
-const APP = "wordly-app-34";
+const APP = "wordly-app-35";
 const DATA = "wordly-data";
 const SHELL = [
   "./", "index.html", "style.css", "home.css", "word.css", "search.css", "lists.css", "quiz.css", "settings.css", "icons.js", "motion.js", "app.js", "word.js", "search.js", "lists.js", "quiz.js", "settings.js", "menu.js", "look.js", "quick.js", "review.js", "meaning.js", "manifest.webmanifest", "icon-512.png",
