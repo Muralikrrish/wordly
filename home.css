@@ -44,8 +44,8 @@
 /* ---- home ---- */
 /* The top bar (SearchScreen): menu · logo and name · My lists, one row. It
    folds away with the hero while the search is in use. */
-.hero { position: relative; display: flow-root; padding: 0; }
-.topbar { display: flex; align-items: center; justify-content: space-between; padding: calc(22px + var(--top)) 14px 14px; }
+.hero { position: relative; display: flow-root; padding: var(--top) 0 0; }   /* the status-bar room stays when the hero folds */
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 22px 14px 14px; }
 .topbar .brand { display: flex; align-items: center; gap: 10px; }
 .hero .logo-disc { width: 46px; height: 46px; border-radius: 50%; background: var(--surface); display: inline-grid; place-items: center; flex: none;
   box-shadow: 0 2px 6px rgba(0,0,0,.18); }
@@ -108,11 +108,11 @@
 .sayit.onclr:active { background: rgba(255,255,255,.2); }
 
 /* The other sections as one row of cards to swipe through. */
-.srow { display: flex; gap: 12px; overflow-x: auto; padding: 0 20px 6px; scroll-snap-type: x mandatory; scroll-padding: 0 20px;
+.secrow { display: flex; gap: 12px; overflow-x: auto; padding: 0 20px 6px; scroll-snap-type: x mandatory; scroll-padding: 0 20px;
   scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-.srow::-webkit-scrollbar { display: none; }
-.srow .scard { flex: none; width: 228px; height: 150px; margin: 0; padding-right: 14px; scroll-snap-align: start; }
-.srow .scard p { -webkit-line-clamp: 3; }
+.secrow::-webkit-scrollbar { display: none; }
+.secrow .scard { flex: none; width: 228px; height: 150px; margin: 0; padding-right: 14px; scroll-snap-align: start; }
+.secrow .scard p { -webkit-line-clamp: 3; }
 
 .cgrid { padding: 0 20px; }
 /* Two cards a row, always the same height (the app's IntrinsicSize rows): a

@@ -417,7 +417,7 @@ async function home(view, opts = {}) {
       <div class="cgrid">${rows.join("")}</div>
       ${open.length % 2 === 0 ? `<div class="cgrid" data-r>${surpriseTile()}</div>` : ""}
       <div class="glabel" data-r>More collections</div>
-      <div class="srow" data-r>${sectionCard("Word families", "Learn one Greek or Latin root, unlock a whole family of words", 3, "ic_col_root", "#/families")}
+      <div class="secrow" data-r>${sectionCard("Word families", "Learn one Greek or Latin root, unlock a whole family of words", 3, "ic_col_root", "#/families")}
       ${groups.map((g, i) => { const [blurb, s, ic] = SECTION[g] || ["Word collections", i, "ic_collections"];
         return sectionCard(g, blurb, s, ic, `#/section/${encodeURIComponent(g)}`); }).join("")}</div>
       ${recents.length ? `<div class="home-head" data-r style="padding-bottom:2px"><h2>Recent searches</h2><a class="see" href="#/lists/recent">See all</a></div>

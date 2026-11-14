@@ -2,7 +2,7 @@
    Stage 3 — search (SearchScreen.kt): the bar, recent chips, results,
    "Did you mean", the empty state.
    ====================================================================== */
-.s3 { position: sticky; top: 0; z-index: 6; background: var(--bg); padding: 6px 20px; }
+.s3 { position: sticky; top: var(--top); z-index: 6; background: var(--bg); padding: 6px 20px; }
 .s3 .sbar { display: flex; align-items: center; height: 56px; padding: 0 4px; border-radius: 28px; }
 /* The search field, lifted off the page: near-white on cream, a lighter slate
    on dark, with a fine rim that turns the accent colour while typing. */
