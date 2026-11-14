@@ -75,7 +75,7 @@ const Search = (() => {
   function box(q = "") {
     return `<div class="s3"><label class="sbar">
         <button class="lead" type="button" aria-label="Search"><span class="halo"></span><span class="lens">${LENS}</span><span class="back">${BACK}</span></button>
-        <input id="q" type="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search" value="${esc(q)}">
+        <input id="q" type="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search a word or a meaning" value="${esc(q)}">
         <button class="clr" type="button" aria-label="Clear">${CLEAR}</button>
       </label></div>
       <div class="chips-wrap"><div class="chips-in"></div></div>
@@ -237,15 +237,38 @@ const Search = (() => {
       Quick.prepare(qn).then((fresh) => { if (fresh && input.value === q) render(); });
       const found = search(q);
       if (!found.length && waiting) { out.innerHTML = ""; return; }
+      // Two or more words: also the words that MEAN it ("someone who talks
+      // too much" → Loquacity, Talkative…), under any matches by name.
+      if (q.trim().split(/\s+/).length >= 2 && !found.some((e) => e.norm === q.trim().toLowerCase())) {
+        out.innerHTML = found.length ? found.map((e) => resultRow(e, q)).join("") + `<div class="msec"></div><div style="height:24px"></div>` : "";
+        const named = new Set(found.map((e) => e.id));
+        Meaning.search(q).then((rows) => {
+          if (input.value !== q) return;
+          rows = rows.filter((e) => !named.has(e.id));
+          const html = rows.length ? `<div class="dym"><div class="k">WORDS THAT MEAN “${esc(q.trim().toUpperCase())}”</div></div>` + rows.map((e) => resultRow(e, null)).join("") : "";
+          if (found.length) { const sec = out.querySelector(".msec"); if (sec) { sec.innerHTML = html; rise(sec); } return; }
+          if (rows.length) { out.innerHTML = html + `<div style="height:24px"></div>`; rise(out); return; }
+          nothing(q);
+        }).catch(() => { if (!found.length && input.value === q) nothing(q); });
+        return;
+      }
       if (found.length) { out.innerHTML = found.map((e) => resultRow(e, q)).join("") + `<div style="height:24px"></div>`; return; }
+      nothing(q);
+    }
+    // Rows that arrive after the search (suggestions, words by meaning) rise in,
+    // 40 + 45·i ms apart (entrance(): 520 ms, 22 px).
+    function rise(root) {
+      root.querySelectorAll(".rrow").forEach((r, i) => r.animate(
+        [{ opacity: 0, transform: "translateY(22px)" }, { opacity: 1, transform: "translateY(0)" }],
+        { duration: 520, delay: 40 + i * 45, easing: "cubic-bezier(.4,0,.2,1)", fill: "backwards" }));
+    }
+    // Nothing by name (or meaning): near spellings, else "No matches".
+    function nothing(q) {
       const near = closestWords(q);
       if (near.length) {
         out.innerHTML = `<div class="dym"><div class="nx">No exact match for “${esc(q.trim())}”.</div><div class="k">DID YOU MEAN</div></div>` +
           near.map((e) => resultRow(e, null)).join("") + `<div style="height:24px"></div>`;
-        // Suggestions rise in, 40 + 45·i ms apart (entrance(): 520 ms, 22 px).
-        out.querySelectorAll(".rrow").forEach((r, i) => r.animate(
-          [{ opacity: 0, transform: "translateY(22px)" }, { opacity: 1, transform: "translateY(0)" }],
-          { duration: 520, delay: 40 + i * 45, easing: "cubic-bezier(.4,0,.2,1)", fill: "backwards" }));
+        rise(out);
         return;
       }
       out.innerHTML = emptyState("No matches", `Nothing found for “${q.trim()}”. Check the spelling, or try just the first few letters.`);
