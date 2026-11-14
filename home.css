@@ -51,7 +51,7 @@
   box-shadow: 0 2px 6px rgba(0,0,0,.18); }
 .hero .logo-disc svg { width: 34px; height: 34px; }
 .topbar .brand { flex: 1; justify-content: center; }
-.hero .wm { font-size: 31px; line-height: 1.2; transform: translateY(-1px); }
+.hero .wm { font-size: 34px; line-height: 1.2; transform: translateY(-1px); }
 .topbar .roundbtn svg { width: 20px; height: 20px; }
 .bg-icons { position: absolute; inset: 0; pointer-events: none; }
 .bg-icon { position: absolute; width: 44px; height: 44px; opacity: 0.15; will-change: transform; animation: drift 11s infinite; }

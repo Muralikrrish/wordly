@@ -263,8 +263,8 @@ const icon = (name, cls = "") => `<span class="ico ${cls}">${ICONS[name] || ""}<
 
 // The Word of the Day's badge (ic_sun.xml).
 const SUN = '<svg viewBox="0 0 24 24" width="19" height="19"><circle cx="12" cy="12" r="4.4" fill="#fff"/><path d="M12 2.4v1.8M12 19.8v1.8M2.4 12h1.8M19.8 12h1.8M5.2 5.2l1.3 1.3M17.5 17.5l1.3 1.3M5.2 18.8l1.3-1.3M17.5 6.5l1.3-1.3" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg>';
-// The menu glyph (MenuGlyph): three rounded lines, the middle one shorter.
-const MENU_GLYPH = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 5h18M1 10h11.4M1 15h18"/></svg>';
+// The menu glyph (MenuGlyph): three rounded lines, the last one half as long.
+const MENU_GLYPH = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 5h18M1 10h18M1 15h10"/></svg>';
 // The app's ribbon "W" (res/drawable/ic_logo.xml).
 const LOGO = `<svg viewBox="0 0 108 108" aria-hidden="true"><defs>
 <linearGradient id="lg1" gradientUnits="userSpaceOnUse" x1="24.1" y1="32.55" x2="39.05" y2="75.45"><stop offset="0" stop-color="#56E3CF"/><stop offset="1" stop-color="#2FA7C9"/></linearGradient>
