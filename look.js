@@ -29,6 +29,7 @@ const Look = (() => {
       const seen = new Set(); nearby = nearby.filter((e) => !seen.has(e.id) && seen.add(e.id));
     }
     const st = { list: missing ? [] : entries, chosen: null, shown: 0, more: null, seed: randomSeed() };
+    Review.add(st.list[0]);           // a word met while reading comes back in the review
     view.classList.add("lookview");
     view.innerHTML = `<div class="lkscrim"></div><div class="lkcard"></div>`;
     const card = view.querySelector(".lkcard"), scrim = view.querySelector(".lkscrim");
@@ -79,6 +80,7 @@ const Look = (() => {
       card.querySelectorAll(".lkpill").forEach((b) => (b.onclick = () => {
         const e = data.byId.get(Number(b.dataset.id));
         st.chosen = entriesFor(e.norm) || [e];
+        Review.add(e);
         st.shown = Math.max(0, st.chosen.findIndex((x) => x.id === e.id));
         render();
       }));

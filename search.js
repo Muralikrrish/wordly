@@ -299,6 +299,15 @@ const Search = (() => {
     });
 
     // Opening a word from the lists: put the keyboard away first.
+    // A word picked from the results (or a recent chip) comes back in the daily review.
+    out.addEventListener("click", (e) => {
+      const a = e.target.closest("a.rlink, a.rchip");
+      if (a) Review.addId(Number(a.getAttribute("href").split("/").pop()));
+    }, true);
+    chipsIn.addEventListener("click", (e) => {
+      const a = e.target.closest("a.rchip");
+      if (a) Review.addId(Number(a.getAttribute("href").split("/").pop()));
+    }, true);
     out.addEventListener("click", (e) => {
       const a = e.target.closest("a.rlink");
       if (!a || document.activeElement !== input) return;

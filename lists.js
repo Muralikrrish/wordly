@@ -36,6 +36,7 @@ const Lists = (() => {
       const it = L.items(); const arr = it[listId] || [];
       const has = arr.some((r) => r.id === id);
       it[listId] = has ? arr.filter((r) => r.id !== id) : [{ id, ts: Date.now() }, ...arr];
+      if (!has) Review.addId(id);
       L.save(null, it); return !has;
     },
     create(name, withId) {

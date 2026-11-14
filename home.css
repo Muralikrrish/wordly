@@ -139,3 +139,34 @@
 .wrow .g { font: 400 14.5px/20px Outfit, sans-serif; color: var(--muted); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .home-bottom { height: 32px; }
 .view { min-height: 100vh; background: var(--bg); }
+
+/* Today's review (ReviewBanner): one line of text and a Start pill. */
+.rvban { display: flex; align-items: center; margin-top: 14px; }
+.rvban .rvtx { flex: 1; display: flex; flex-direction: column; }
+.rvban h3 { margin: 8px 0 2px; font: 600 22px/27px Outfit, sans-serif; }
+.rvgo { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,.2); font: 600 15px Outfit, sans-serif; }
+
+/* The review page (ReviewScreen). */
+.rvs { padding: 6px 20px 0; }
+.rvof { font: 500 14px Outfit, sans-serif; color: var(--muted); padding-bottom: 10px; }
+.rvbar { height: 5px; border-radius: 99px; background: rgba(var(--accent-rgb),.14); overflow: hidden; }
+.rvbar i { display: block; height: 100%; border-radius: 99px; background: var(--accent); transition: width .4s; }
+.rvcard { padding-top: 18px; }
+.rvface { border-radius: 26px; padding: 26px 22px; text-align: center; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+.rvface .kk { font: 600 11px Outfit, sans-serif; letter-spacing: 1.4px; color: rgba(255,255,255,.8); }
+.rvface .w { font: 600 32px/38px Outfit, sans-serif; margin-top: 10px; }
+.rvface .p { font: italic 400 16px Outfit, sans-serif; color: rgba(255,255,255,.9); margin-top: 2px; }
+.rvsay { margin: 10px 0 0 -10px !important; font-size: 17px !important; }
+.rvhint { margin: 14px 4px 18px; font: 400 15.5px Outfit, sans-serif; color: var(--muted); }
+.rvmean { padding: 14px 4px 0 !important; }
+.rvfull { display: inline-block; margin: 8px 0 0; padding: 8px 4px; font: 600 15px Outfit, sans-serif; color: var(--accent); }
+.rvrow { display: flex; gap: 12px; margin-top: 16px; }
+.rvbtn { flex: 1; padding: 14px 18px; border-radius: 999px; border: 1.5px solid rgba(var(--accent-rgb),.45); background: none; color: var(--accent); font: 600 16px Outfit, sans-serif; }
+.rvbtn.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.rvbtn.wide { width: 100%; }
+.rvstop { display: block; width: 100%; margin: 22px 0 32px; padding: 10px; background: none; border: 0; font: 400 14px Outfit, sans-serif; color: var(--muted); }
+.rvdone { padding: 48px 28px 0; text-align: center; }
+.rvtick { width: 84px; height: 84px; border-radius: 50%; margin: 0 auto; display: grid; place-items: center; background: rgba(var(--accent-rgb),.14); color: var(--accent); }
+.rvdone h2 { margin: 22px 0 10px; font: 600 23px Outfit, sans-serif; color: var(--ink); }
+.rvdone p { margin: 0 0 28px; font: 400 16px/24px Outfit, sans-serif; color: var(--muted); }
+.rvdone .rvbtn { width: 100%; }

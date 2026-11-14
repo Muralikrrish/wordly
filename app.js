@@ -65,7 +65,7 @@ const wishlist = () => store.get("wishlist", []);      // [{word, ts}]
 const isSaved = (id) => saved().some((r) => r.id === id);
 function toggleSaved(id) {
   const now = saved().filter((r) => r.id !== id);
-  if (now.length === saved().length) now.unshift({ id, ts: Date.now() });
+  if (now.length === saved().length) { now.unshift({ id, ts: Date.now() }); Review.addId(id); }
   store.set("saved", now);
   return now.some((r) => r.id === id);
 }
@@ -395,6 +395,7 @@ async function home(view, opts = {}) {
           ${entry.preview ? `<p>${esc(entry.preview)}</p>` : ""}</div>
         <div class="bottom"><div class="label">WORD OF THE DAY</div><div class="date">${date}</div></div>
       </a>
+      ${Review.banner(seed)}
       <div class="home-head" data-r><span class="wm semi">Word collections</span></div>
       <div style="height:12px"></div>
       <div class="cgrid">${rows.join("")}</div>
@@ -533,6 +534,7 @@ async function route() {
     case "about": Menu.aboutPage($view); break;
     case "privacy": Menu.privacyPage($view); break;
     case "say": Menu.sayGuidePage($view); break;
+    case "review": await Review.page($view); break;
     case "quiz": await (parts[1] === "play" ? Quiz.playPage($view, { returning })
       : parts[1] === "words" ? Quiz.wordsPage($view, params.get("tab")) : Quiz.hubPage($view)); break;
     default: await home($view);
