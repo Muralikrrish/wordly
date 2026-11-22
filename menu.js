@@ -238,7 +238,14 @@ const Menu = (() => {
         <span class="tx">${esc(b.sound || "a quick l or n, almost no vowel")}${b.stressed ? "<small>say this beat loudest</small>" : ""}</span></div>`).join("")}</div>
       ${alts.length ? `<div class="sayx-alt">Also said: ${alts.map((a) => Word.sayItHtml(a)).join(", ")}</div>` : ""}
       <button class="sayx-guide">Full pronunciation guide</button></div>`);
-    el.querySelector(".sayx-line").onclick = () => Word.speak(word, pron);
+    const line = el.querySelector(".sayx-line");
+    line.onclick = () => Word.speak(word, pron);
+    // The speaker's waves pulse while the word plays (Pronounce.kt SpeakerGlyph), as on the word page.
+    const talk = () => {
+      if (!line.isConnected) { Word.speech.listeners.delete(talk); return; }
+      line.classList.toggle("talk", Word.speech.preparing || Word.speech.speaking);
+    };
+    Word.speech.listeners.add(talk);
     el.querySelector(".sayx-guide").onclick = () => close(() => go("#/say"));
   }
 

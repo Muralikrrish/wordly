@@ -131,13 +131,26 @@ const Word = (() => {
   // these. The session type "playback" keeps them audible with the silent switch
   // on (like the app, which plays on media volume). The context is made and
   // resumed inside the tap, as iPhone requires.
-  let ctx = null, clip = null, tapN = 0;
+  // iPhone still lists a page under Now Playing while its audio context stays
+  // open, so the context is closed a moment after each word ends (a new one is
+  // made on the next tap; decoded sounds are kept and work in any context).
+  let ctx = null, clip = null, tapN = 0, closeTimer = 0;
+  function releaseCtx() {
+    clearTimeout(closeTimer);
+    closeTimer = setTimeout(() => {
+      if (clip || !ctx) return;
+      const c = ctx; ctx = null;
+      c.close().catch(() => {});
+      try { if (navigator.mediaSession) { navigator.mediaSession.metadata = null; navigator.mediaSession.playbackState = "none"; } } catch (_) {}
+    }, 400);
+  }
   const buffers = new Map();         // file → decoded sound (last 30 kept)
   function audioCtx() {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
     try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (_) {}
-    if (!ctx) ctx = new AC();
+    clearTimeout(closeTimer);
+    if (!ctx || ctx.state === "closed") ctx = new AC();
     if (ctx.state !== "running") ctx.resume().catch(() => {});
     return ctx;
   }
@@ -161,13 +174,13 @@ const Word = (() => {
     if (c) {
       setSpeech(true, false);
       loadClip(c, sayFile(word, pron)).then((buf) => {
-        if (n !== tapN) return;                          // a newer tap took over
+        if (n !== tapN || c.state === "closed") return;  // a newer tap took over
         const s = c.createBufferSource();
         s.buffer = buf; s.connect(c.destination);
-        s.onended = () => { if (clip === s) { clip = null; setSpeech(false, false); } };
+        s.onended = () => { if (clip === s) { clip = null; setSpeech(false, false); releaseCtx(); } };
         clip = s; s.start();
         setSpeech(false, true);
-      }).catch(() => { if (n === tapN) voice(word); });    // no clip → the device's voice
+      }).catch(() => { if (n === tapN) { releaseCtx(); voice(word); } });    // no clip → the device's voice
       return;
     }
     voice(word);
