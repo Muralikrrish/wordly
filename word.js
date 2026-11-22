@@ -126,19 +126,48 @@ const Word = (() => {
   // webname), so a tap plays at once with nothing to look up first.
   const pronOf = new Map();          // word (lower case) → its spelling, as pages load
   const sayFile = (word, pron) => "data/say/" + word.toLowerCase().replace(/[^a-z0-9]+/g, "_") + "__" + pron.replace(/[^A-Za-z0-9]+/g, "_") + ".mp3";
-  let clip = null;
+  // Clips play through Web Audio, not an <audio> element: iPhone shows every
+  // <audio> sound as "Now Playing" in the Dynamic Island / lock screen, but not
+  // these. The session type "playback" keeps them audible with the silent switch
+  // on (like the app, which plays on media volume). The context is made and
+  // resumed inside the tap, as iPhone requires.
+  let ctx = null, clip = null, tapN = 0;
+  const buffers = new Map();         // file → decoded sound (last 30 kept)
+  function audioCtx() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (_) {}
+    if (!ctx) ctx = new AC();
+    if (ctx.state !== "running") ctx.resume().catch(() => {});
+    return ctx;
+  }
+  async function loadClip(c, file) {
+    if (buffers.has(file)) return buffers.get(file);
+    const r = await fetch(file);
+    if (!r.ok) throw new Error("no clip");
+    const raw = await r.arrayBuffer();
+    const buf = await new Promise((ok, no) => c.decodeAudioData(raw, ok, no));
+    buffers.set(file, buf);
+    if (buffers.size > 30) buffers.delete(buffers.keys().next().value);
+    return buf;
+  }
+  function stopClip() { if (clip) { clip.onended = null; try { clip.stop(); } catch (_) {} clip = null; } }
   function speak(word, pron) {
     pron = pron || pronOf.get(word.toLowerCase());
-    if (clip) { clip.onended = clip.onerror = null; clip.pause(); clip = null; }
+    const n = ++tapN;
+    stopClip();
     if ("speechSynthesis" in window) speechSynthesis.cancel();
-    if (pron) {
-      const a = new Audio(sayFile(word, pron));
-      clip = a;
-      a.onplaying = () => setSpeech(false, true);
-      a.onended = () => { if (clip === a) clip = null; setSpeech(false, false); };
-      a.onerror = () => { if (clip === a) clip = null; voice(word); };   // no clip → the device's voice
+    const c = pron && audioCtx();
+    if (c) {
       setSpeech(true, false);
-      a.play().catch(() => { if (clip === a) { clip = null; voice(word); } });
+      loadClip(c, sayFile(word, pron)).then((buf) => {
+        if (n !== tapN) return;                          // a newer tap took over
+        const s = c.createBufferSource();
+        s.buffer = buf; s.connect(c.destination);
+        s.onended = () => { if (clip === s) { clip = null; setSpeech(false, false); } };
+        clip = s; s.start();
+        setSpeech(false, true);
+      }).catch(() => { if (n === tapN) voice(word); });    // no clip → the device's voice
       return;
     }
     voice(word);
