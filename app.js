@@ -660,3 +660,42 @@ fetch("data/version.txt", { cache: "no-cache" }).then((r) => (r.ok ? r.text() : 
   if (had && had !== v && "caches" in window) { await caches.delete("wordly-data"); data.defs.clear(); }
   store.set("dataVersion", v);
 }).catch(() => {});
+
+// ---- mouse drag on sideways rows (desktop) -------------------------------
+// Touch and touchpads already scroll the card rows sideways; this lets a mouse
+// press-and-drag do the same. A drag never counts as a tap on the card under it.
+(() => {
+  const ROWS = ".secrow, .chips, .lchips, .sortbar, .dstrip, .table";
+  let row = null, x0 = 0, left0 = 0, moved = false;
+  addEventListener("pointerdown", (e) => {
+    if (e.pointerType !== "mouse" || e.button !== 0) return;
+    const r = e.target.closest(ROWS);
+    if (!r || r.scrollWidth <= r.clientWidth + 1) return;
+    row = r; x0 = e.clientX; left0 = r.scrollLeft; moved = false;
+  });
+  addEventListener("pointermove", (e) => {
+    if (!row) return;
+    const dx = e.clientX - x0;
+    if (!moved && Math.abs(dx) < 6) return;
+    if (!moved) { moved = true; row.style.scrollSnapType = "none"; row.style.scrollBehavior = "auto"; row.style.cursor = "grabbing"; document.body.style.userSelect = "none"; }
+    row.scrollLeft = left0 - dx;
+  });
+  const end = () => {
+    if (!row) return;
+    const r = row; row = null;
+    if (!moved) return;
+    document.body.style.userSelect = ""; r.style.cursor = "";
+    // let the cards settle on a snap point again, smoothly
+    const from = r.scrollLeft;
+    r.style.scrollSnapType = ""; r.style.scrollBehavior = "";
+    r.scrollLeft = from;
+    // swallow the click that ends a drag
+    const eat = (c) => { c.preventDefault(); c.stopPropagation(); };
+    addEventListener("click", eat, { capture: true, once: true });
+    setTimeout(() => { removeEventListener("click", eat, { capture: true }); moved = false; }, 80);
+  };
+  addEventListener("pointerup", end);
+  addEventListener("pointercancel", end);
+  // links and images inside the rows would otherwise start a browser drag
+  addEventListener("dragstart", (e) => { if (e.target.closest && e.target.closest(ROWS)) e.preventDefault(); });
+})();

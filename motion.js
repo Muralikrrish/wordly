@@ -246,9 +246,14 @@ const Motion = (() => {
     }, 600);
     if (oldNode) {
       const y = scrollY;
+      // Keep the old screen exactly where and as wide as it was: on a wide
+      // (desktop) window the page is a centred column, and left/right 0 made it
+      // jump out to the full window width for a moment.
+      const r = oldNode.getBoundingClientRect();
       oldNode.style.position = "fixed";
       oldNode.style.top = `${-y}px`;
-      oldNode.style.left = "0"; oldNode.style.right = "0";
+      oldNode.style.left = `${r.left}px`; oldNode.style.width = `${r.width}px`;
+      oldNode.style.margin = "0";
       oldNode.style.zIndex = "30";
       oldNode.style.pointerEvents = "none";
       const h = innerHeight;
