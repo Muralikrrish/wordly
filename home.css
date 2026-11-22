@@ -87,7 +87,7 @@
 .home-head .see:active { background: rgba(var(--accent-rgb), .1); }
 
 /* The Word of the Day: the home screen's showpiece (SearchScreen.kt WotdCard). */
-.wotd3 { display: block; margin: 18px 20px 0; border-radius: 26px; padding: 16px 18px 18px; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+.wotd3 { display: block; margin: 8px 20px 0; border-radius: 26px; padding: 16px 18px 18px; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
 .wotd3 .kick { display: flex; align-items: center; font: 600 12px Outfit, sans-serif; letter-spacing: 1.4px; color: rgba(255,255,255,.9); }
 .wotd3 .kick .bolt { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.18); display: grid; place-items: center; margin-right: 10px; }
 .wotd3 .kick .kt { flex: 1; }
