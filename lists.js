@@ -294,34 +294,73 @@ const Lists = (() => {
     else { const it = L.items(); it[r.source] = put(it[r.source] || []); L.save(null, it); }
   }
 
-  // Swipe a row left past 35% to remove it (with Undo for 4.5 s).
+  // Swipe a row left to show a round red Remove button (as in iPhone's Messages,
+  // same as the app's SwipeRevealRow). The swipe itself never removes: only a tap
+  // on the button does (Undo for 4.5 s). One row open at a time; a tap anywhere
+  // or a scroll closes it.
+  const REVEAL = 84;
+  let openRow = null, swallowClick = false;
+  const closeOpen = () => { if (openRow) { const r = openRow; openRow = null; r.close(); } };
+  window.addEventListener("scroll", closeOpen, { passive: true, capture: true });
+  window.addEventListener("hashchange", () => { openRow = null; });
   function swipeable(rowEl, onRemove) {
-    const fg = rowEl.querySelector(".sfg");
-    let x0 = 0, y0 = 0, dx = 0, dragging = false, decided = false;
-    fg.addEventListener("pointerdown", (e) => { x0 = e.clientX; y0 = e.clientY; dx = 0; dragging = true; decided = false; });
+    const fg = rowEl.querySelector(".sfg"), btn = rowEl.querySelector(".sbtn");
+    let x0 = 0, y0 = 0, base = 0, dx = 0, dragging = false, decided = false, moved = false, lastX = 0, lastT = 0, vel = 0, busy = false;
+    const set = (x) => {
+      dx = x; fg.style.transform = x ? `translateX(${x}px)` : "";
+      const p = Math.min(1, -x / REVEAL);
+      btn.style.opacity = p; btn.style.transform = `scale(${0.6 + 0.4 * p})`;
+    };
+    const settle = (to, done) => { const from = dx; tween({ duration: 220, easing: ease.fastOutSlowIn, update: (k) => set(from + (to - from) * k), done }); };
+    const me = { close: () => settle(0) };
+    fg.addEventListener("pointerdown", (e) => {
+      if (busy) return;
+      swallowClick = !!openRow;            // the tap that closes an open row does nothing else
+      if (openRow && openRow !== me) closeOpen();
+      x0 = lastX = e.clientX; y0 = e.clientY; lastT = e.timeStamp; base = dx; vel = 0;
+      dragging = true; decided = false; moved = false;
+    });
     fg.addEventListener("pointermove", (e) => {
       if (!dragging) return;
       const mx = e.clientX - x0, my = e.clientY - y0;
-      if (!decided) { if (Math.abs(mx) < 8 && Math.abs(my) < 8) return; decided = true; if (Math.abs(my) > Math.abs(mx) || mx > 0) { dragging = false; return; } fg.setPointerCapture(e.pointerId); }
-      dx = Math.min(0, mx);
-      fg.style.transform = `translateX(${dx}px)`;
+      if (!decided) {
+        if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+        decided = true;
+        if (Math.abs(my) > Math.abs(mx) || (mx > 0 && base === 0)) { dragging = false; return; }
+        moved = true; fg.setPointerCapture(e.pointerId);
+      }
+      const dt = e.timeStamp - lastT;
+      if (dt > 0) vel = (e.clientX - lastX) / dt;
+      lastX = e.clientX; lastT = e.timeStamp;
+      set(Math.max(-REVEAL * 1.3, Math.min(0, base + mx)));
     });
     const end = () => {
       if (!dragging) return;
       dragging = false;
-      const w = rowEl.offsetWidth;
-      if (-dx > w * 0.35) {
-        tween({ duration: 220, easing: ease.fastOutSlowIn, update: (k) => { fg.style.transform = `translateX(${dx - (w + dx) * k}px)`; },
-          done: () => { const h = rowEl.offsetHeight; tween({ duration: 220, easing: ease.fastOutSlowIn, update: (k) => { rowEl.style.height = `${h * (1 - k)}px`; }, done: onRemove }); } });
-      } else if (dx) {
-        const from = dx;
-        tween({ duration: 220, easing: ease.fastOutSlowIn, update: (k) => { fg.style.transform = `translateX(${from * (1 - k)}px)`; } });
-      }
+      if (!moved) return;
+      const open = vel < -0.6 || (vel <= 0.6 && dx < -REVEAL / 2);
+      settle(open ? -REVEAL : 0);
+      if (open) openRow = me; else if (openRow === me) openRow = null;
     };
     fg.addEventListener("pointerup", end); fg.addEventListener("pointercancel", end);
-    fg.addEventListener("click", (e) => { if (Math.abs(dx) > 6) e.preventDefault(); });
+    fg.addEventListener("click", (e) => {
+      if (moved || swallowClick || openRow) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        if (!moved) closeOpen();
+        moved = false; swallowClick = false;
+      }
+    }, true);
+    btn.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      if (busy || openRow !== me) return;
+      busy = true; openRow = null;
+      settle(-rowEl.offsetWidth, () => {
+        const h = rowEl.offsetHeight;
+        tween({ duration: 220, easing: ease.fastOutSlowIn, update: (k) => { rowEl.style.height = `${h * (1 - k)}px`; }, done: onRemove });
+      });
+    });
   }
-  const swipeRow = (e) => `<div class="srow" data-id="${e.id}"><div class="sbg"><span class="trash">${ICONS.ic_trash}</span></div>
+  const swipeRow = (e) => `<div class="srow" data-id="${e.id}"><div class="sbg"><button class="sbtn" aria-label="Remove ${esc(e.word)}">${ICONS.ic_trash}</button></div>
     <a class="sfg" href="#/word/${e.id}"><div class="wrow"><div><span class="w">${esc(e.word)}</span><span class="t">${pos(e.type)}</span></div>
     <div class="g g3">${esc(e.preview || "")}</div></div><div class="sdiv"></div></a></div>`;
 

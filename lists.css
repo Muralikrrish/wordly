@@ -87,9 +87,11 @@ h1.bigt { margin: 0; padding: 4px 22px 8px; font: 600 30px/36px Outfit, sans-ser
 .seg .ck { width: 18px; height: 18px; display: inline-block; }
 .seg .ck svg { width: 18px; height: 18px; display: block; }
 .srow { position: relative; overflow: hidden; }
-.sbg { position: absolute; inset: 0; background: rgba(242,184,181,.16); display: flex; align-items: center; justify-content: flex-end; padding-right: 28px; }
-.sbg .trash { width: 22px; height: 22px; color: var(--err); }
-.sbg .trash svg { width: 22px; height: 22px; display: block; }
+/* Behind the row: a round red Remove button that grows in as the row slides left. */
+.sbg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; padding-right: 18px; }
+.sbtn { width: 48px; height: 48px; border-radius: 50%; border: 0; padding: 0; background: #E5484D; color: #fff;
+  display: flex; align-items: center; justify-content: center; opacity: 0; transform: scale(.6); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.sbtn svg { width: 22px; height: 22px; display: block; }
 .sfg { display: block; position: relative; background: var(--bg); padding: 0 20px; touch-action: pan-y; }
 .sdiv { height: 1px; background: rgba(var(--ink-rgb),.10); }
 .shint { text-align: center; padding-top: 18px; font: 400 13px Outfit, sans-serif; color: rgba(var(--muted-rgb),.7); }

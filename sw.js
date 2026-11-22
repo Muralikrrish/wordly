@@ -3,7 +3,7 @@
    quick-definition file in data/q/) is stored the first time it is read, so
    words already read open offline.
    Bump APP when the page's own files change, so phones pick up the new ones. */
-const APP = "wordly-app-41";
+const APP = "wordly-app-42";
 const DATA = "wordly-data";
 const SHELL = [
   "./", "index.html", "style.css", "home.css", "word.css", "search.css", "lists.css", "quiz.css", "settings.css", "icons.js", "motion.js", "app.js", "word.js", "search.js", "lists.js", "quiz.js", "settings.js", "menu.js", "look.js", "quick.js", "review.js", "meaning.js", "manifest.webmanifest", "icon-512.png",
@@ -26,6 +26,8 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
+  // Word clips: straight to the browser (Safari plays audio in byte ranges).
+  if (url.pathname.includes("/data/say/")) return;
   // Definitions: from the phone if read before, else fetched and kept.
   if (url.pathname.includes("/data/d/") || url.pathname.includes("/data/w/") || url.pathname.includes("/data/defs/") || url.pathname.includes("/data/q/")) {
     e.respondWith(caches.open(DATA).then(async (c) => {
