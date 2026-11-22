@@ -19,7 +19,8 @@ const Review = (() => {
   }
   const addId = (id) => add(data.byId.get(id));
   const due = () => Object.values(all()).filter((x) => x.d != null && x.d <= today()).sort((a, b) => a.d - b.d || a.a - b.a);
-  const dueCount = () => due().length;
+  // At most one session's worth (UserDataDb.reviewDueCount): never a daunting pile.
+  const dueCount = () => Math.min(due().length, SESSION);
   function nextDay() {
     const t = today(), ds = Object.values(all()).map((x) => x.d).filter((d) => d != null && d > t);
     return ds.length ? Math.min(...ds) : null;
@@ -38,12 +39,14 @@ const Review = (() => {
   // Java's String.hashCode, so a word gets the same card colour as on Android.
   function hash(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0; return h; }
 
-  // Home: "6 words to review", never in the Word of the Day's colour family.
+  // Home: "6 words to review", never in the colour group of the Word of the Day or the Daily Challenge (Palette.review).
   function banner(wotdSeed) {
     const n = dueCount();
     if (!n) return "";
-    const pool = [...Array(10).keys()].filter((i) => family(i) !== family(wotdSeed));
-    const seed = pool[today() % pool.length];
+    const t = today();
+    const avoid = new Set([family(((t % 10) + 10) % 10), family(challengeSeed(t))]);
+    const pool = [...Array(10).keys()].filter((i) => !avoid.has(family(i)));
+    const seed = pool[((t % pool.length) + pool.length) % pool.length];
     return `<a class="banner rvban sheen" data-press="0.98" data-r href="#/review" style="background:${gradient(seed)}">
       <span class="rvtx"><span class="kick">TODAY'S REVIEW</span><h3>${n === 1 ? "1 word to review" : `${n} words to review`}</h3>
       <span class="sub">A minute now keeps them for good.</span></span><span class="rvgo">Start</span></a>`;
@@ -94,18 +97,35 @@ const Review = (() => {
           <div class="rvcard"><div class="rvface sheen" style="background:${gradient(seed)}"><div class="kk">DO YOU REMEMBER?</div>
             <div class="w">${esc(e.word)}</div><div class="p">${pos(e.type)}</div></div>
           ${pron ? `<div class="sayit rvsay" role="button" aria-label="Hear the word">${Word.SPEAKER}<span class="sp">${Word.sayItHtml(pron)}</span></div>` : ""}
-          ${st.shown ? `<div class="dprose rvmean">${esc(e.preview || "")}</div>
+          ${st.shown ? `<div class="rvopen"><div class="dprose rvmean">${esc(e.preview || "")}</div>
               <a class="rvfull" href="#/word/${e.id}">Open the full definition</a>
-              <div class="rvrow"><button class="rvbtn" data-press="0.96" data-a="no">Not yet</button><button class="rvbtn on" data-press="0.96" data-a="yes">I knew it</button></div>`
+              <div class="rvrow"><button class="rvbtn" data-press="0.96" data-a="no">Not yet</button><button class="rvbtn on" data-press="0.96" data-a="yes">I knew it</button></div></div>`
             : `<p class="rvhint">Think of what it means, then check.</p><button class="rvbtn on wide" data-press="0.96" data-a="show">Show meaning</button>`}
           <button class="rvstop" data-a="stop">Stop reviewing this word</button></div></div>`;
       }
       body.innerHTML = html;
+      const ease = "cubic-bezier(.4,0,.2,1)";
       const c = body.querySelector(".rvcard");
-      if (c && animate) c.animate([{ opacity: 0, transform: "translate3d(30%,0,0)" }, { opacity: 1, transform: "none" }], { duration: 380, easing: "cubic-bezier(.4,0,.2,1)" });
-      const m = body.querySelector(".rvmean");
-      if (m && animate === "reveal") m.animate([{ opacity: 0, transform: "translate3d(0,10px,0)" }, { opacity: 1, transform: "none" }], { duration: 320, easing: "cubic-bezier(.4,0,.2,1)" });
-      body.querySelector(".rvsay")?.addEventListener("click", () => Word.speak(cards[st.i].e.word));
+      // The next word slides in from the side (AnimatedContent in ReviewScreen.kt).
+      if (c && animate === true) c.animate([{ opacity: 0, transform: "translate3d(30%,0,0)" }, { opacity: 1, transform: "none" }], { duration: 380, easing: ease });
+      // Opening the page: it assembles like the quiz page — progress, then the card rising in (Modifier.entrance).
+      if (animate === "enter") {
+        [".rvof", ".rvbar", ".rvcard", ".rvdone"].forEach((q, i) => {
+          const el = body.querySelector(q);
+          if (el) el.animate([{ opacity: 0, transform: "translate3d(0,22px,0)" }, { opacity: 1, transform: "none" }],
+            { duration: 520, delay: q === ".rvdone" ? 0 : [0, 50, 110][i], easing: ease, fill: "backwards" });
+        });
+      }
+      // Show meaning: the meaning unfolds downward under the word (expandVertically + fade).
+      const o = body.querySelector(".rvopen");
+      if (o && animate === "reveal") {
+        const h = o.scrollHeight;
+        o.style.overflow = "hidden";
+        o.animate([{ height: "0px", opacity: 0 }, { height: h + "px", opacity: 1 }], { duration: 320, easing: ease })
+          .onfinish = () => { o.style.overflow = ""; };
+        body.querySelector(".rvmean")?.animate([{ transform: "translate3d(0,10px,0)" }, { transform: "none" }], { duration: 420, easing: ease });
+      }
+      body.querySelector(".rvsay")?.addEventListener("click", () => Word.speak(cards[st.i].e.word, prons.get(cards[st.i].e.id)));
       body.querySelectorAll("[data-a]").forEach((b) => b.addEventListener("click", () => {
         const a = b.dataset.a, cur = cards[st.i];
         if (navigator.vibrate) navigator.vibrate(8);
@@ -118,7 +138,7 @@ const Review = (() => {
     view.innerHTML = Settings.subBar("Review") + `<div class="rvbody"></div>`;
     Settings.wireBack(view);
     const body = view.querySelector(".rvbody");
-    draw(false);
+    draw("enter");
   }
 
   const ICON_CHECK = `<svg viewBox="0 0 24 24" width="40" height="40"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z" fill="currentColor"/></svg>`;

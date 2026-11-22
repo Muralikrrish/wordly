@@ -305,7 +305,8 @@ function kotlinRandom(seedBig) {
     },
   };
 }
-const FAMILY = [0, 1, 2, 3, 4, 5, 6, 6, 7, 0];
+// Hue groups (Palette.kt): greens, blues, pinks, warms — the home cards each take a different one.
+const FAMILY = [0, 1, 1, 2, 2, 3, 3, 3, 0, 0];
 const family = (i) => FAMILY[((i % 10) + 10) % 10];
 // Palette.challenge(day): a fresh hue daily, never the Word of the Day's hue
 // family that day, nor the same family as the day before.
@@ -436,7 +437,7 @@ async function home(view, opts = {}) {
     if (!slot || !pron) return;
     slot.innerHTML = `<span class="sayit onclr" role="button" aria-label="Hear the word">${Word.SPEAKER}<span class="sp">${Word.sayItHtml(pron)}</span></span>`;
     const say = slot.firstElementChild;
-    say.addEventListener("click", (ev) => { ev.preventDefault(); ev.stopPropagation(); Word.speak(entry.word); });
+    say.addEventListener("click", (ev) => { ev.preventDefault(); ev.stopPropagation(); Word.speak(entry.word, pron); });
     const talk = () => say.classList.toggle("talk", Word.speech.preparing || Word.speech.speaking);
     Word.speech.listeners.add(talk);
     const done = view.cleanup;

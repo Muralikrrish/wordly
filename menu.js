@@ -37,12 +37,12 @@ const Menu = (() => {
     drawer.innerHTML = `<div class="dhead"><span class="ddisc">${LOGO}</span><span class="dname"><span class="wm dwm">Wordly</span><small>Words, truly explained</small></span></div>
       ${item("home", "Dictionary", ic(I.search, 20), "#/", 0)}
       ${item("wotd", "Word of the day", ic(I.date, 20), "#wotd", 1)}
-      ${item("quiz", "Word challenge", ic(ICONS.ic_challenge, 20), "#/quiz", 3)}
-      ${item("collections", "Collections", ic(ICONS.ic_collections, 20), "#/collections", 6)}
+      ${item("quiz", "Daily challenge", ic(ICONS.ic_challenge, 20), "#/quiz", 3)}
+      ${item("collections", "Word collections", ic(ICONS.ic_collections, 20), "#/collections", 6)}
       ${item("families", "Word families", ic(ICONS.ic_col_root, 20), "#/families", 9)}
       <hr class="ddiv">
-      ${item("review", "Review", ic(I.check, 20), "#/review", 8)}
-      ${item("recent", "Recent", ic(I.refresh, 20), "#/lists/recent", 5)}
+      ${item("review", "Review my words", ic(I.check, 20), "#/review", 8)}
+      ${item("recent", "Recently viewed", ic(I.refresh, 20), "#/lists/recent", 5)}
       ${item("lists", "My lists", ic(ICONS.ic_bookmark_outline, 20), "#/lists/saved", 4)}
       <hr class="ddiv">
       ${item("settings", "Settings", ic(I.settings, 20), "#/settings", 2)}
@@ -238,7 +238,7 @@ const Menu = (() => {
         <span class="tx">${esc(b.sound || "a quick l or n, almost no vowel")}${b.stressed ? "<small>say this beat loudest</small>" : ""}</span></div>`).join("")}</div>
       ${alts.length ? `<div class="sayx-alt">Also said: ${alts.map((a) => Word.sayItHtml(a)).join(", ")}</div>` : ""}
       <button class="sayx-guide">Full pronunciation guide</button></div>`);
-    el.querySelector(".sayx-line").onclick = () => Word.speak(word);
+    el.querySelector(".sayx-line").onclick = () => Word.speak(word, pron);
     el.querySelector(".sayx-guide").onclick = () => close(() => go("#/say"));
   }
 

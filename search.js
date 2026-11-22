@@ -228,7 +228,20 @@ const Search = (() => {
       setHero(!active);
       showClear(q.length > 0);
       setChips(focused && !q.trim());
-      if (!q.trim()) { out.innerHTML = ""; body.hidden = false; return; }
+      if (!q.trim()) {
+        // While the bar is in use with nothing typed, the home cards step aside
+        // for the search panel (SearchScreen.kt SearchPanel); leaving brings
+        // home back at the top, as the app opens.
+        if (focused) {
+          body.hidden = true;
+          if (!out.querySelector(".spanel")) { out.innerHTML = panel(); risePanel(); }
+        } else {
+          const wasPanel = !!out.querySelector(".spanel");
+          out.innerHTML = ""; body.hidden = false;
+          if (wasPanel) scrollTo({ top: 0, behavior: "smooth" });
+        }
+        return;
+      }
       body.hidden = true;
       // Quick (WordNet) words arrive in small files while typing: draw again
       // once this query's file is in. Until then, an empty result waits.
@@ -255,6 +268,32 @@ const Search = (() => {
       if (found.length) { out.innerHTML = found.map((e) => resultRow(e, q)).join("") + `<div style="height:24px"></div>`; return; }
       nothing(q);
     }
+    // The search panel: how to search by meaning (a tap types the example in)
+    // and Surprise me. Each piece rises in (entrance(): 520 ms, 22 px).
+    const TRIES = ["fear of heights", "lover of books", "lucky discovery"];
+    function panel() {
+      return `<div class="spanel"><div class="k">SEARCH BY MEANING</div>
+        <p>Can't think of the word? Describe it, and Wordly finds the words that mean it.</p>
+        <div class="stries">${TRIES.map((t) => `<button class="stry" data-press="0.94">“${esc(t)}”</button>`).join("")}</div>
+        <button class="ssurp" data-press="0.94">${ICONS.ic_shuffle}Surprise me with a word</button></div>`;
+    }
+    function risePanel() {
+      const parts = [...out.querySelectorAll(".spanel .k, .spanel p, .stry, .ssurp")];
+      const delays = [120, 150, 180, 220, 260, 320];
+      parts.forEach((el, i) => el.animate([{ opacity: 0, transform: "translateY(22px)" }, { opacity: 1, transform: "translateY(0)" }],
+        { duration: 520, delay: delays[Math.min(i, delays.length - 1)], easing: "cubic-bezier(.4,0,.2,1)", fill: "backwards" }));
+    }
+    // Taps in the panel must not take the focus from the bar (that would close it first).
+    out.addEventListener("pointerdown", (e) => { if (e.target.closest(".stry, .ssurp")) e.preventDefault(); });
+    out.addEventListener("click", (e) => {
+      const t = e.target.closest(".stry");
+      if (t) { input.value = t.textContent.replace(/[“”]/g, ""); input.focus(); render(); return; }
+      if (e.target.closest(".ssurp")) {
+        if (navigator.vibrate) navigator.vibrate(8);
+        input.blur();
+        setTimeout(() => go("#/random"), 200);
+      }
+    });
     // Rows that arrive after the search (suggestions, words by meaning) rise in,
     // 40 + 45·i ms apart (entrance(): 520 ms, 22 px).
     function rise(root) {

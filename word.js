@@ -121,8 +121,30 @@ const Word = (() => {
   // ---- speech + the sound bars (Pronounce.kt EqualizerBars) ---------------
   const speech = { preparing: false, speaking: false, listeners: new Set() };
   function setSpeech(p, s) { speech.preparing = p; speech.speaking = s; speech.listeners.forEach((f) => f()); }
-  function speak(word) {
-    if (!("speechSynthesis" in window)) return;
+  // Wordly's own clips (data/say/, made from each word's pronunciation spelling).
+  // The file name is worked out from the word + spelling (tools/pack_audio.py
+  // webname), so a tap plays at once with nothing to look up first.
+  const pronOf = new Map();          // word (lower case) → its spelling, as pages load
+  const sayFile = (word, pron) => "data/say/" + word.toLowerCase().replace(/[^a-z0-9]+/g, "_") + "__" + pron.replace(/[^A-Za-z0-9]+/g, "_") + ".mp3";
+  let clip = null;
+  function speak(word, pron) {
+    pron = pron || pronOf.get(word.toLowerCase());
+    if (clip) { clip.onended = clip.onerror = null; clip.pause(); clip = null; }
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    if (pron) {
+      const a = new Audio(sayFile(word, pron));
+      clip = a;
+      a.onplaying = () => setSpeech(false, true);
+      a.onended = () => { if (clip === a) clip = null; setSpeech(false, false); };
+      a.onerror = () => { if (clip === a) clip = null; voice(word); };   // no clip → the device's voice
+      setSpeech(true, false);
+      a.play().catch(() => { if (clip === a) { clip = null; voice(word); } });
+      return;
+    }
+    voice(word);
+  }
+  function voice(word) {
+    if (!("speechSynthesis" in window)) { setSpeech(false, false); return; }
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(word);
     u.lang = "en-US";
@@ -409,6 +431,7 @@ const Word = (() => {
     const labelH = wotd ? 24 : 20;
     // How to say it sits in the header when the word's file has arrived in time.
     const headPron = defNow && defNow[2] ? defNow[2] : null;
+    if (headPron) pronOf.set(e.word.toLowerCase(), headPron);
     const pronH = headPron ? 44 : 0;
     view.innerHTML = `<div class="wp">
       <header class="wp-head sheen" style="background:${gradient(seed)}"><div class="in">
@@ -488,6 +511,7 @@ const Word = (() => {
     if (!bodyIn) return;
     if (!def) { bodyIn.innerHTML = `<div class="empty">Couldn't load this word. Check your connection and try again.</div>`; return; }
     const [intro, sections, pron] = def;
+    if (pron) pronOf.set(e.word.toLowerCase(), pron);
     const ex = (await exP) || { stories: {}, mixups: [], families: [] };
     const story = ex.stories[id];
     const mixes = ex.mixups.filter((m) => m.items.some(([eid]) => eid === id));
