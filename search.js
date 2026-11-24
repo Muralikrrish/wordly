@@ -221,7 +221,12 @@ const Search = (() => {
     }
     chipsWrap.style.height = "0px";
 
-    function render() {
+    // The query whose results are on screen. Leaving the bar (a mouse press on a
+    // result blurs it first) must not rebuild the same rows: the row under the
+    // pointer would be replaced before the click lands, so a click on PC only
+    // worked the second time.
+    let drawnQ = null;
+    function render(force) {
       const q = input.value;
       const active = focused || q.trim().length > 0;
       morph.to(active ? 1 : 0);
@@ -229,6 +234,7 @@ const Search = (() => {
       showClear(q.length > 0);
       setChips(focused && !q.trim());
       if (!q.trim()) {
+        drawnQ = null;
         // While the bar is in use with nothing typed, the home cards step aside
         // for the search panel (SearchScreen.kt SearchPanel); leaving brings
         // home back at the top, as the app opens.
@@ -243,11 +249,13 @@ const Search = (() => {
         return;
       }
       body.hidden = true;
+      if (!force && q === drawnQ) return;          // same query, rows already drawn
+      drawnQ = q;
       // Quick (WordNet) words arrive in small files while typing: draw again
       // once this query's file is in. Until then, an empty result waits.
       const qn = q.trim().toLowerCase();
       const waiting = !Quick.ready(qn);
-      Quick.prepare(qn).then((fresh) => { if (fresh && input.value === q) render(); });
+      Quick.prepare(qn).then((fresh) => { if (fresh && input.value === q) render(true); });
       const found = search(q);
       if (!found.length && waiting) { out.innerHTML = ""; return; }
       // Two or more words: also the words that MEAN it ("someone who talks
