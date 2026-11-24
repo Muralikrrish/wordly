@@ -336,7 +336,14 @@ const Search = (() => {
       focused = false;
       render();
     }
-    const onPop = () => { if (pushed && !(history.state && history.state.s)) { pushed = false; leave(); } };
+    // Only a real Back on this same page clears the search. Chrome also fires
+    // popstate when a link changes the address (#/ → #/word/…); clearing then
+    // showed home for a moment while the word was still loading (2026-11-24).
+    const here = location.hash;
+    const onPop = () => {
+      if (location.hash !== here) return;
+      if (pushed && !(history.state && history.state.s)) { pushed = false; leave(); }
+    };
     addEventListener("popstate", onPop);
 
     input.addEventListener("focus", () => { focused = true; enterSearch(); render(); });
