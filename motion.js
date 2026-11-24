@@ -243,6 +243,9 @@ const Motion = (() => {
     setTimeout(() => {
       if (oldNode && oldNode.isConnected) oldNode.remove();
       newNode.style.opacity = ""; newNode.style.transform = "";
+      // the entrance runs on the animation engine: never leave it half-way
+      // (a frozen or hidden page would otherwise keep the screen invisible)
+      newNode.getAnimations().forEach((a) => { if (a.playState !== "finished") a.finish(); });
     }, 600);
     if (oldNode) {
       const y = scrollY;
@@ -267,19 +270,22 @@ const Motion = (() => {
         oldNode.animate([{ opacity: 1 }, { opacity: 0 }], { duration: kind === "toWord" ? 200 : 180, fill: "forwards" }).onfinish = () => oldNode.remove();
       }
     }
+    // The new screen comes in on the browser's animation engine too (2026-11-24):
+    // a frame-by-frame tween only moves when the page is idle, and right after a
+    // Back the page is busy building home — on a PC the fade had "finished"
+    // before its first frame, so home just popped in with no animation.
     if (kind === "fromWord") {
-      newNode.style.opacity = "0";
-      tween({ duration: 340, easing: ease.fastOutSlowIn, update: (e) => {
-        // Grow about the middle of the SCREEN (as the app does), not the middle
-        // of the whole page — on a long list that point is far below, which
-        // made the visible rows drift upward.
+      // Grow about the middle of the SCREEN (as the app does), not the middle
+      // of the whole page — on a long list that point is far below, which
+      // made the visible rows drift upward.
+      requestAnimationFrame(() => {
         newNode.style.transformOrigin = `50% ${(scrollY + innerHeight / 2).toFixed(0)}px`;
-        newNode.style.transform = `scale(${(0.98 + 0.02 * e).toFixed(4)})`;
-      }, done: () => { newNode.style.transform = ""; } });
-      tween({ duration: 260, update: (e) => { newNode.style.opacity = e; }, done: () => { newNode.style.opacity = ""; } });
+      });
+      newNode.animate([{ transform: "scale(0.98)" }, { transform: "scale(1)" }],
+        { duration: 340, easing: "cubic-bezier(0.4, 0, 0.2, 1)" });
+      newNode.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: "linear" });
     } else {
-      newNode.style.opacity = "0";
-      tween({ duration: 220, update: (e) => { newNode.style.opacity = e; }, done: () => { newNode.style.opacity = ""; } });
+      newNode.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: "linear" });
     }
   }
 
